@@ -192,9 +192,18 @@ PC 에 claude 가 깔려 있는가가 아닙니다. 아래 `로컬 CLI 연결` �
 **이 등록은 선택이 아니라 필수입니다** — PC 에 `claude` 가 깔려 있고 로그인까지 돼 있어도,
 등록하지 않으면 확장은 거기에 닿지 못합니다. 배지가 `없음` 으로 뜨고 말로 찾기 칸도 잠깁니다.
 
-1. `chrome://extensions`(엣지는 `edge://extensions`) 에서 이 확장의 **ID** 를 복사
-2. `powershell -ExecutionPolicy Bypass -File native\install.ps1 -ExtensionId <ID>`
-3. 브라우저를 완전히 종료 후 재시작 → `설정 및 연결` 에 `로컬 Claude CLI: 연결됨`
+새 PC 에 설치할 것은 둘입니다.
+
+1. **Node.js** — `node` 가 PATH 에 있어야 합니다. 다리(`native\host.mjs`)가 node 로 돕니다.
+2. **Claude Code CLI** — `claude` 가 PATH 에 있고 `claude login` 으로 로그인돼 있어야 합니다. 구독 계정(Pro/Max)이면 됩니다.
+
+그 다음 등록과 재시작입니다.
+
+3. 브라우저에 확장을 올린 뒤 `/bridge install`. 또는 `chrome://extensions`(엣지는 `edge://extensions`)에서
+   이 확장의 **ID** 를 복사해 `powershell -ExecutionPolicy Bypass -File native\install.ps1 -ExtensionId <ID>`.
+   크롬·엣지 키에 한 번에 들어갑니다.
+4. 브라우저 완전 재시작. 엣지는 창을 닫아도 남으니 `/bridge restart edge` 로 마무리합니다.
+5. 패널 `설정 및 연결` 에 `로컬 Claude CLI: 연결됨` 확인. 막히면 `/bridge` 가 여섯 항목을 짚어 줍니다.
 
 `install.ps1` 은 크롬 키(`HKCU\Software\Google\Chrome\NativeMessagingHosts`)와
 엣지 키(`HKCU\Software\Microsoft\Edge\NativeMessagingHosts`)에 같은 매니페스트를 한 번에 겁니다.
