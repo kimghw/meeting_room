@@ -1,0 +1,160 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>회의실 예약</title>
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="app-header">
+      <div>
+        <div class="eyebrow"><span class="brand-mark" aria-hidden="true">K</span> KRS WORKSPACE</div>
+        <h1 id="appTitle">회의실 예약<span class="title-dot">.</span></h1>
+      </div>
+      <button id="refresh" class="icon refresh" title="새로고침" aria-label="예약 현황 새로고침">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 7a7 7 0 0 1 11.6-1L20 9M4 15l2.3 3A7 7 0 0 0 17.9 17"/></svg>
+      </button>
+    </header>
+    <nav class="tabs" role="tablist" aria-label="예약 종류">
+      <button id="tabRoom" class="tab active" role="tab" aria-selected="true">회의실</button>
+      <button id="tabCar" class="tab" role="tab" aria-selected="false">차량</button>
+      <button id="tabMine" class="tab" role="tab" aria-selected="false">내 예약</button>
+    </nav>
+    <section class="controls card" aria-label="조회 날짜와 시간">
+      <div class="date-bar">
+        <label class="date-display" title="날짜 선택">
+          <span class="calendar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 10h16M8 14h2m4 0h2m-8 3h2"/></svg></span>
+          <span class="date-copy"><span id="dateWeekday" class="date-weekday">날짜 선택</span><strong id="dateLabel" class="date-label">일정을 확인하세요</strong></span>
+          <input type="date" id="date" aria-label="조회 날짜" />
+        </label>
+        <div class="date-actions">
+          <button id="today" class="today">오늘</button>
+          <div class="day-nav" role="group" aria-label="날짜 이동">
+            <button id="prevDay" class="icon" title="이전 날" aria-label="이전 날"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
+            <button id="nextDay" class="icon" title="다음 날" aria-label="다음 날"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg></button>
+          </div>
+        </div>
+      </div>
+      <div class="filter-bar">
+        <div class="region-control">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 10c0 5-7 10-7 10S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          <button id="region" class="seg" title="클릭하면 지역이 바뀝니다">지역</button>
+        </div>
+        <div class="hours-control" role="group" aria-label="조회 시간">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg>
+          <select id="hourStart" aria-label="시작 시간"></select>
+          <span class="time-divider" aria-hidden="true">–</span>
+          <select id="hourEnd" aria-label="종료 시간"></select>
+        </div>
+        <div class="span-control" role="group" aria-label="훑을 기간" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 10h16"/></svg>
+          <select id="spanDays" aria-label="훑을 기간">
+            <option value="7">7일</option>
+            <option value="14">14일</option>
+            <option value="21">21일</option>
+            <option value="30" selected>한 달</option>
+          </select>
+        </div>
+        <label class="auto" title="60초마다 자동으로 다시 조회합니다">
+          <span>자동 갱신</span><input type="checkbox" id="auto" role="switch" /><span class="switch-track" aria-hidden="true"></span>
+        </label>
+      </div>
+    </section>
+    <section class="ask card off" aria-labelledby="askTitle">
+      <h2 id="askTitle" class="sr-only">말로 찾는 회의실/차량</h2>
+      <div class="ask-bar">
+        <span class="sparkle-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Z"/><path d="m20 2 .7 1.3L22 4l-1.3.7L20 6l-.7-1.3L18 4l1.3-.7L20 2Z"/></svg></span>
+        <input type="text" id="askInput" aria-label="말로 찾는 회의실/차량" placeholder="claude가 연결되지 않았습니다" title="native/install.ps1 로 다리를 등록하거나, 아래 설정에 API 키를 넣으면 쓸 수 있습니다" autocomplete="off" disabled />
+        <button id="askGo" class="primary" aria-label="조건에 맞는 빈 시간 찾기" disabled>찾기 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></button>
+      </div>
+      <div id="askNote" class="ask-note" role="status" aria-live="polite"></div>
+      <ul id="askList" class="ask-list"></ul>
+    </section>
+    <section class="schedule" aria-labelledby="scheduleTitle">
+      <div class="section-heading">
+        <h2 id="scheduleTitle">회의실 현황 <span id="scheduleDate" class="head-date"></span><span id="roomCount" class="count"></span></h2>
+        <button id="openPageInline" class="open-inline" type="button" title="사이트에서 열기" aria-label="사이트에서 열기">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-8 8M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg>
+        </button>
+        <span class="selection-hint">빈 시간을 눌러 예약하세요</span>
+      </div>
+      <div id="grid" class="grid-wrap card" aria-busy="true"></div>
+      <div id="mineWrap" class="mine-wrap card hidden">
+        <ul id="mineList" class="mine-list"></ul>
+        <p id="mineEmpty" class="hint hidden">
+          이 기간에 <strong>내 예약으로 확인된 건</strong>이 없습니다.<br>
+          사이트는 본인 예약에만 수정·삭제 버튼을 붙이는데, 승인 상태에 따라 그 버튼이 없을 수 있습니다.
+          아래 <strong>설정 및 연결</strong>에 이름을 넣으면 예약자 이름으로도 찾습니다.
+        </p>
+      </div>
+      <div class="statusline">
+        <span id="status" class="status" role="status" aria-live="polite"></span>
+        <span id="stamp" class="stamp" title="마지막 조회 시각"></span>
+      </div>
+      <button id="scanBar" type="button" class="scanbar hidden" title="한 달치를 미리 읽어 둡니다">
+        <span id="scanNote" class="scan-note" role="status" aria-live="polite"></span>
+        <span class="scan-track" aria-hidden="true"><i id="scanFill" class="scan-fill"></i></span>
+      </button>
+    </section>
+    <section id="booking" class="booking card hidden" aria-label="선택한 시간 예약">
+      <div class="booking-head"><strong id="pickLabel"></strong><button id="clearPick" class="ghost small">선택 지우기</button></div>
+      <ul id="pickList" class="pick-list"></ul>
+      <label for="fTitle" id="lblTitle">회의 주제</label>
+      <input type="text" id="fTitle" placeholder="예) 주간 업무회의" autocomplete="off" />
+      <!-- 차량 신청에만 쓰는 칸. 사이트의 fnSaveCheck() 는 행선지를 반드시 요구한다. -->
+      <div id="carFields" class="car-fields hidden">
+        <label for="fPlace">행선지 <span class="req" title="사이트가 반드시 요구합니다">필수</span></label>
+        <input type="text" id="fPlace" placeholder="예) 서울 본사" autocomplete="off" />
+        <label for="fPassenger">동승자</label>
+        <input type="text" id="fPassenger" placeholder="예) 김철수, 이영희" autocomplete="off" />
+        <p class="hint" id="carWho"></p>
+      </div>
+      <div class="actions">
+        <button id="extend" class="primary wide hidden">이어붙이기</button>
+        <button id="modify" class="primary wide hidden">이 시간으로 수정</button>
+        <button id="submit" class="primary wide">예약하기</button>
+        <button id="cancelBooking" class="danger wide hidden">취소하기</button>
+      </div>
+      <p id="editNote" class="edit-note hidden"></p>
+    </section>
+    <footer class="settings card">
+      <details class="diag">
+        <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="var(--surface)"/><circle cx="15" cy="17" r="3" fill="var(--surface)"/></svg><span>설정 및 연결</span><span class="summary-detail">내 이름 · API 키</span></summary>
+        <div class="details-content">
+          <label class="key-row" for="myName">내 이름 (내 예약 찾기용)</label>
+          <input type="text" id="myName" placeholder="예) 홍길동" autocomplete="off" spellcheck="false" />
+          <p class="hint">
+            사이트는 로그인한 사람이 누구인지 화면에 적어주지 않습니다. 이름을 넣어두면
+            예약자 이름으로도 <strong>내 예약</strong>을 찾습니다. 이 확장으로 예약하면 자동으로 채워집니다.
+          </p>
+          <div class="row-line">
+            <strong>로컬 Claude CLI</strong>
+            <span id="cliState" class="badge">확인 중</span>
+            <button id="cliCheck" class="ghost small">다시 확인</button>
+          </div>
+          <p class="hint">
+            연결되면 API 키 없이 이미 로그인된 Claude Code 를 씁니다.
+            설정 방법은 <code>native/install.ps1</code> 을 보세요.
+          </p>
+          <label class="key-row" for="apiKey">Anthropic API 키 (CLI 가 없을 때만)</label>
+          <input type="password" id="apiKey" placeholder="sk-ant-... (선택)" autocomplete="off" spellcheck="false" />
+          <p class="hint">둘 다 없으면 <strong>말로 찾기</strong> 칸이 잠깁니다. 키는 이 브라우저에만 저장됩니다.</p>
+        </div>
+      </details>
+      <details class="diag">
+        <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 7-5 5 5 5m8-10 5 5-5 5m-3-13-2 16"/></svg><span>페이지 구조 캡처</span><span class="summary-detail">진단</span></summary>
+        <div class="details-content">
+          <p class="hint">현황이 제대로 표시되지 않으면 로그인한 상태에서 페이지 구조를 저장해 개발자에게 전달해 주세요.</p>
+          <button id="capture" class="ghost wide">구조 캡처 저장</button>
+          <pre id="diagOut" class="diag-out" role="status"></pre>
+        </div>
+      </details>
+    </footer>
+    <p class="footer-note">좋은 회의의 시작, 여유 있는 공간.</p>
+  </main>
+  <script type="module" src="sidepanel.js"></script>
+</body>
+</html>

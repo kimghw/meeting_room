@@ -1,0 +1,372 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f5f5f7; --surface: #fff; --surface-soft: #f5f5f7;
+  --fg: #1d1d1f; --muted: #6e6e76; --faint: #76767e; --line: #eaeaec;
+  --free: #d6eee1; --free-line: #acd6bc; --free-hover: #b4dec5;
+  --busy: #e5e6eb; --busy-line: #d3d5dd;
+  --pick: #007aff; --pick-soft: #eaf3ff; --danger: #d73333;
+  --unknown: #d2a24a; --mine: #dcaa37;
+  --shadow: 0 2px 8px rgb(25 30 45 / 3%), 0 0 1px rgb(25 30 45 / 5%);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif; -webkit-font-smoothing: antialiased; }
+.app { max-width: 860px; margin: 0 auto; padding: 24px 20px 16px; }
+svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+button, input, select { font: inherit; color: inherit; }
+button, input, select, summary { -webkit-tap-highlight-color: transparent; }
+button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; padding: 7px 12px; border: 0; border-radius: 9px; background: var(--surface-soft); cursor: pointer; transition: background .16s ease, box-shadow .16s ease, transform .16s ease; }
+button:hover { background: var(--line); }
+button:active:not(:disabled) { transform: scale(.96); }
+button:disabled { cursor: default; opacity: .42; }
+button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible, td.slot:focus-visible { outline: 3px solid var(--pick); outline-offset: 3px; }
+input:not([type="checkbox"]):not([type="date"]) { min-height: 40px; min-width: 0; padding: 10px 12px; background: var(--surface-soft); border: 1px solid transparent; border-radius: 10px; outline-offset: 2px; }
+input::placeholder { color: var(--faint); }
+button.primary { background: var(--pick); color: #fff; font-weight: 600; }
+button.primary:hover:not(:disabled) { background: #0069dd; }
+button.ghost { background: transparent; color: var(--muted); }
+button.ghost:hover { background: var(--surface-soft); color: var(--fg); }
+button.small { min-height: 28px; padding: 4px 8px; font-size: 14px; }
+button.wide { width: 100%; margin-top: 10px; min-height: 40px; }
+.card { border: 1px solid var(--line); border-radius: 17px; background: var(--surface); box-shadow: var(--shadow); }
+.app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+.eyebrow { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; font-weight: 650; letter-spacing: 1.7px; }
+.brand-mark { display: inline-grid; place-items: center; width: 15px; height: 15px; border-radius: 4px; background: var(--fg); color: var(--surface); font-size: 12px; letter-spacing: 0; }
+h1 { margin: 6px 0 0; font-size: 28px; line-height: 1.25; font-weight: 700; letter-spacing: -1.2px; }
+.title-dot { color: var(--pick); }
+button.icon { width: 32px; min-height: 32px; padding: 7px; }
+.app-header .refresh { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow); color: var(--muted); }
+.app-header .refresh:hover { color: var(--pick); background: var(--pick-soft); }
+.refresh.spin svg { animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.controls { padding: 11px 16px; }
+.date-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.date-display { position: relative; display: flex; align-items: center; gap: 11px; min-width: 0; cursor: pointer; border-radius: 8px; }
+.date-display:focus-within { outline: 3px solid var(--pick); outline-offset: 4px; }
+.calendar-icon { display: grid; place-items: center; width: 37px; height: 37px; border-radius: 11px; background: var(--pick-soft); color: var(--pick); flex: none; }
+.calendar-icon svg { width: 20px; height: 20px; }
+.date-copy { display: flex; flex-direction: column; }
+.date-weekday { font-size: 11px; line-height: 1.3; color: var(--muted); letter-spacing: .1px; }
+.date-label { font-size: 19px; line-height: 1.2; font-weight: 650; letter-spacing: -.55px; white-space: nowrap; }
+.date-display input[type="date"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; }
+.date-display input::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; cursor: pointer; }
+.date-actions { display: flex; align-items: center; gap: 8px; }
+.today { min-height: 31px; padding: 5px 11px; font-size: 14px; font-weight: 600; }
+.today.on { color: var(--pick); background: var(--pick-soft); }
+.today.on:hover { background: color-mix(in srgb, var(--pick) 15%, var(--surface)); }
+.day-nav { display: flex; padding: 2px; background: var(--surface-soft); border-radius: 10px; }
+.day-nav button { min-height: 28px; width: 28px; background: transparent; border-radius: 7px; }
+.day-nav button:hover { background: var(--surface); box-shadow: var(--shadow); }
+.day-nav svg { width: 15px; height: 15px; }
+.filter-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--line); }
+.region-control { position: relative; display: flex; align-items: center; flex: none; color: var(--pick); }
+.region-control > svg { position: absolute; left: 8px; width: 14px; height: 14px; pointer-events: none; }
+button.seg { min-height: 34px; padding: 4px 22px 4px 27px; color: var(--pick); background: var(--pick-soft); font-size: 15px; font-weight: 600; }
+button.seg::after { content: ""; position: absolute; right: 9px; top: calc(50% - 3px); width: 4px; height: 4px; border-right: 1.3px solid currentColor; border-bottom: 1.3px solid currentColor; transform: rotate(45deg); pointer-events: none; }
+.hours-control { display: flex; flex: none; align-items: center; gap: 5px; }
+.hours-control > svg { width: 14px; height: 14px; color: var(--faint); margin-right: 1px; }
+.hours-control select { min-height: 34px; padding: 2px 1px; border: 0; border-radius: 5px; background: var(--surface); font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; cursor: pointer; }
+.time-divider { color: var(--faint); font-size: 14px; }
+.auto { position: relative; display: inline-flex; align-items: center; gap: 7px; margin-left: auto; font-size: 13px; color: var(--muted); white-space: nowrap; cursor: pointer; user-select: none; }
+.auto input { position: absolute; right: 0; width: 30px; height: 18px; margin: 0; opacity: 0; }
+.switch-track { position: relative; width: 30px; height: 18px; border-radius: 12px; background: var(--busy-line); transition: background .2s; pointer-events: none; }
+.switch-track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgb(0 0 0 / 16%); transition: transform .2s; }
+.auto input:checked + .switch-track { background: #34c759; }
+.auto input:checked + .switch-track::after { transform: translateX(12px); }
+.auto input:focus-visible + .switch-track { outline: 3px solid var(--pick); outline-offset: 3px; }
+.schedule { margin-top: 23px; }
+.section-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: 0 2px 11px; }
+h2 { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: -.35px; }
+.count { display: inline-grid; place-items: center; min-width: 22px; height: 20px; margin-left: 4px; padding: 0 6px; border-radius: 7px; background: #e8e8ed; color: var(--muted); font-size: 12px; vertical-align: 1px; font-weight: 600; letter-spacing: 0; }
+.count:empty { display: none; }
+.selection-hint { font-size: 12px; color: var(--muted); }
+.grid-wrap { overflow: hidden; padding: 5px 9px 0; }
+.grid-wrap:empty { min-height: 100px; background: linear-gradient(110deg, var(--surface) 25%, var(--surface-soft) 45%, var(--surface) 65%); }
+.grid-wrap[aria-busy="true"] { opacity: .65; pointer-events: none; }
+.table-scroll { overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--busy-line) transparent; padding-bottom: 4px; }
+table.grid { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: fixed; }
+table.grid th, table.grid td { padding: 0; border: 0; }
+table.grid th.room { position: sticky; left: 0; z-index: 1; width: 170px; padding: 4px 8px 4px 4px; text-align: left; background: var(--surface); box-shadow: 4px 0 5px -4px rgb(0 0 0 / 8%); }
+table.grid thead th { height: 30px; }
+table.grid thead th.room { color: var(--faint); font-size: 12px; font-weight: 400; }
+table.grid th.hour { min-width: 23px; color: var(--faint); font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; }
+table.grid .rname { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 500; line-height: 20px; letter-spacing: -.3px; }
+table.grid .room-meta { display: flex; align-items: center; gap: 5px; color: var(--faint); font-size: 12px; font-weight: 400; line-height: 16px; }
+table.grid .seats { font-size: 12px; color: var(--muted); }
+table.grid tbody th, table.grid tbody td { border-top: 1px solid color-mix(in srgb, var(--line) 65%, transparent); }
+table.grid td.slot { position: relative; height: 35px; min-width: 23px; padding: 4px 1.5px; cursor: pointer; user-select: none; outline-offset: -1px; }
+.slot-fill { display: block; width: 100%; height: 26px; border-radius: 4px; transition: background .13s, box-shadow .13s; pointer-events: none; }
+td.slot.free .slot-fill { background: var(--free); }
+td.slot.free:hover .slot-fill { background: var(--free-hover); box-shadow: inset 0 0 0 1px var(--free-line); }
+td.slot.busy { cursor: not-allowed; }
+td.slot.busy .slot-fill { background: var(--busy); }
+td.slot.unknown { cursor: not-allowed; }
+td.slot.unknown .slot-fill { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--unknown) 55%, var(--surface)) 0 3px, color-mix(in srgb, var(--unknown) 20%, var(--surface)) 3px 6px); }
+/* 내 예약은 아래쪽 굵은 밑줄로 구분한다 */
+td.slot.busy.mine .slot-fill {
+  box-shadow: inset 0 -5px 0 var(--mine);
+}
+
+/* 방금 내가 넣은 예약은 테두리까지 둘러 잠깐 깜빡인다 */
+td.slot.busy.fresh .slot-fill {
+  box-shadow: inset 0 -5px 0 var(--mine), inset 0 0 0 2px var(--mine);
+  animation: freshPulse 1.3s ease-out 3;
+}
+@keyframes freshPulse {
+  0%, 100% { filter: none; }
+  50% { filter: brightness(1.3) saturate(1.2); }
+}
+@media (prefers-reduced-motion: reduce) {
+  td.slot.busy.fresh .slot-fill { animation: none; }
+}
+td.slot.picked .slot-fill, td.slot.picked:hover .slot-fill { background: var(--pick); box-shadow: 0 2px 5px rgb(0 122 255 / 20%); }
+td.slot.picked .slot-fill::after { content: ""; position: absolute; top: calc(50% - 5px); left: calc(50% - 3px); width: 4px; height: 7px; border-right: 1.5px solid #fff; border-bottom: 1.5px solid #fff; transform: rotate(45deg); }
+/* 자주 안 쓰는 방은 접어 둔다. 줄은 그대로 있고 보이기만 감춘다 */
+table.grid tr.folded { display: none; }
+table.grid.show-folded tr.folded { display: table-row; }
+table.grid td.fold-cell { padding: 0; }
+.fold-toggle { display: flex; align-items: center; justify-content: flex-start; gap: 6px; width: 100%; min-height: 0; padding: 6px 4px; background: transparent; border-radius: 7px; color: var(--muted); font-size: 12px; }
+.fold-toggle:hover { background: var(--surface-soft); color: var(--fg); }
+.fold-caret { display: flex; flex: none; color: var(--faint); transition: transform .15s; }
+.fold-caret svg { width: 14px; height: 14px; }
+table.grid.show-folded .fold-caret { transform: rotate(180deg); }
+.fold-names { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fold-count { flex: none; margin-left: auto; padding: 0 6px; border-radius: 6px; background: var(--surface-soft); color: var(--faint); font-size: 11px; font-variant-numeric: tabular-nums; }
+.fold-toggle:hover .fold-count { background: var(--surface); }
+.legend { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 16px; padding: 12px 2px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); }
+.legend > span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; flex: none; }
+.legend i.f { background: var(--free); border: 1px solid var(--free-line); }
+.legend i.b { background: var(--busy); border: 1px solid var(--busy-line); }
+.legend i.m { background: var(--busy); box-shadow: inset 0 -3px 0 var(--mine); }
+.legend i.u { background: repeating-linear-gradient(135deg, var(--unknown) 0 2px, var(--surface) 2px 4px); }
+.statusline { display: flex; align-items: baseline; gap: 8px; margin: 9px 3px 0; }
+.status { min-width: 0; flex: 1; color: var(--muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.status.error { color: var(--danger); }
+.status a { color: var(--pick); text-underline-offset: 3px; }
+.stamp { flex: none; color: var(--faint); font-size: 11px; white-space: nowrap; }
+.stamp:not(:empty)::before { content: ""; display: inline-block; width: 4px; height: 4px; margin-right: 4px; border-radius: 50%; background: var(--faint); vertical-align: 2px; }
+
+/* 한 달 미리 훑기. 세 탭이 같은 캐시를 보므로 진행 상황도 한 곳에서 보여준다. */
+.scanbar { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 0; margin: 7px 0 0; padding: 4px 3px; background: transparent; border-radius: 7px; }
+.scanbar:hover { background: var(--surface-soft); }
+.scan-note { flex: none; color: var(--faint); font-size: 11px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.scan-track { flex: 1; min-width: 40px; height: 3px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.scan-fill { display: block; width: 0; height: 100%; border-radius: 3px; background: var(--pick); transition: width .25s ease; }
+.scanbar.done .scan-fill { background: var(--free-line); }
+.scanbar.done .scan-note { color: var(--muted); }
+.booking { margin-top: 16px; padding: 16px; border-color: color-mix(in srgb, var(--pick) 25%, var(--line)); }
+/* 감추기는 무엇보다 세야 한다. `.car-fields { display: block }` 처럼 **뒤에 오는 같은 굵기의**
+   규칙이 이기는 바람에 회의실 탭에서도 행선지·동승자 칸이 보였다.
+   아래 [hidden] 도 같은 이유로 !important 다. */
+.hidden { display: none !important; }
+.booking-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.booking-head strong { color: var(--pick); font-size: 15px; }
+.pick-list, .ask-list { list-style: none; margin: 0; padding: 0; max-height: 190px; overflow-y: auto; }
+.pick-list { margin-bottom: 13px; }
+.pick-list li { display: flex; align-items: center; gap: 7px; padding: 8px 10px; margin-bottom: 5px; border: 1px solid var(--line); border-radius: 9px; font-size: 14px; }
+.pk-room { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pk-time { flex: none; color: var(--muted); font-variant-numeric: tabular-nums; }
+button.pk-del { flex: none; min-height: 24px; width: 24px; padding: 0; border-radius: 50%; background: var(--surface-soft); color: var(--muted); font-size: 17px; line-height: 1; }
+button.pk-del:hover { color: var(--danger); }
+.pick-list li.done { border-color: var(--free-line); }
+.pick-list li.fail { border-color: var(--danger); }
+.pk-mark { flex: none; font-size: 14px; }
+.pk-mark:empty { display: none; }
+.booking label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 14px; }
+.booking > input { width: 100%; }
+/* 말로 찾기 — 로고·입력칸·버튼이 한 줄이다. 패널이 좁아 제목을 따로 두면
+   정작 입력칸이 밀린다. 제목 몫은 플레이스홀더가 하고, 낭독기용으로만 .sr-only 로 남긴다. */
+.ask { margin: 0 0 12px; padding: 9px 11px; }
+.sparkle-icon { display: flex; flex: none; color: var(--pick); }
+.sparkle-icon svg { width: 18px; height: 18px; }
+.ask-bar { display: flex; align-items: center; gap: 8px; }
+.ask-bar input { flex: 1; font-size: 14px; }
+.ask-bar button { min-width: 64px; padding: 8px 11px; font-size: 14px; border-radius: 10px; }
+.ask-bar button svg { width: 13px; height: 13px; }
+.ask.off .ask-bar button { background: var(--surface-soft); color: var(--muted); opacity: 1; }
+.ask.off .ask-bar input:disabled { color: var(--faint); cursor: not-allowed; }
+.ask.off .sparkle-icon { color: var(--faint); opacity: .55; }
+.ask-note { margin-top: 9px; color: var(--muted); font-size: 14px; }
+.ask-note:empty, .ask-list:empty { display: none; }
+.ask-note.error { color: var(--danger); }
+.ask-list:not(:empty) { margin-top: 10px; }
+.ask-list li { display: flex; align-items: center; gap: 7px; padding: 10px 8px; margin-bottom: 5px; border: 1px solid var(--line); border-radius: 9px; cursor: pointer; font-size: 14px; }
+.ask-list li:hover { background: var(--pick-soft); border-color: var(--pick); }
+.ak-date { flex: none; font-weight: 600; color: var(--pick); font-variant-numeric: tabular-nums; }
+.ak-room { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ak-time { flex: none; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ak-seat { flex: none; font-size: 11px; color: var(--muted); }
+.ak-kind { flex: none; padding: 1px 6px; border-radius: 6px; background: var(--surface-soft); color: var(--muted); font-size: 11px; }
+.settings { margin-top: 14px; padding: 0 14px; border-radius: 14px; }
+.diag + .diag { border-top: 1px solid var(--line); }
+.diag summary { display: flex; align-items: center; gap: 9px; min-height: 43px; color: var(--muted); font-size: 14px; cursor: pointer; list-style: none; }
+.diag summary::-webkit-details-marker { display: none; }
+.diag summary > svg { width: 15px; height: 15px; }
+.diag summary::after { content: ""; width: 5px; height: 5px; margin: 0 3px; border-right: 1.4px solid var(--faint); border-bottom: 1.4px solid var(--faint); transform: rotate(-45deg); transition: transform .15s; }
+.diag[open] summary::after { transform: rotate(45deg); }
+.summary-detail { margin-left: auto; font-size: 12px; color: var(--faint); }
+.details-content { padding: 0 0 14px 24px; }
+.key-row { display: block; margin-bottom: 6px; font-size: 14px; color: var(--muted); }
+
+/* 설정: 로컬 CLI 연결 상태 */
+.row-line { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-bottom: 4px; font-size: 14px; }
+.row-line button { margin-left: auto; }
+.row-line strong { font-size: 14px; }
+.badge {
+  font-size: 12px; padding: 1px 7px; border-radius: 8px;
+  border: 1px solid var(--line); color: var(--muted); white-space: nowrap;
+}
+.badge.on { color: var(--fg); background: var(--free); border-color: var(--free-line); }
+#apiKey { width: 100%; font-size: 14px; }
+.hint { color: var(--muted); font-size: 14px; line-height: 1.7; }
+.grid-wrap > .hint { padding: 20px 12px; }
+.diag-out { max-height: 160px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted); font: 12px/1.6 ui-monospace, monospace; }
+.diag-out:empty { display: none; }
+.footer-note { margin: 16px 0 0; text-align: center; color: var(--faint); font-size: 11px; letter-spacing: .1px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@media (max-width: 440px) {
+  .app { padding: 20px 12px 14px; }
+  .controls { padding: 11px 12px; }
+  .filter-bar { gap: 9px; margin-top: 9px; padding-top: 9px; }
+  .hours-control { gap: 2px; }
+  .hours-control > svg { display: none; }
+  .auto { gap: 5px; }
+  .auto > span:first-child { font-size: 13px; }
+  .date-label { font-size: 18px; }
+  .calendar-icon { width: 34px; height: 34px; }
+  .date-display { gap: 8px; }
+  .date-actions { gap: 6px; }
+  .grid-wrap { padding-right: 7px; padding-left: 7px; }
+  table.grid { min-width: 426px; }
+  table.grid th.room { width: 156px; }
+  .selection-hint { font-size: 12px; }
+}
+@media (max-width: 350px) {
+  .calendar-icon { display: none; }
+  .filter-bar { gap: 7px; }
+  .today { padding-inline: 8px; }
+  .selection-hint { max-width: 115px; text-align: right; }
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161618; --surface: #232326; --surface-soft: #2d2d31;
+    --fg: #f5f5f7; --muted: #a4a4ac; --faint: #8e8e97; --line: #36363a;
+    --free: #284d3d; --free-line: #46765c; --free-hover: #35664b;
+    --busy: #414149; --busy-line: #54545e; --pick: #409cff; --pick-soft: #233449;
+    --danger: #ff7871; --mine: #e8ba56; --shadow: 0 2px 8px rgb(0 0 0 / 8%);
+  }
+  .count { background: var(--surface-soft); }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+@media (forced-colors: active) { .slot-fill { forced-color-adjust: none; } td.slot:focus-visible { outline-color: Highlight; } .switch-track { border: 1px solid ButtonText; } }
+
+
+/* ------------------------------------------------------------ 탭 */
+.tabs {
+  display: flex; gap: 4px; margin-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.tabs .tab {
+  flex: 1; border: 0; background: transparent; border-radius: 0;
+  padding: 8px 6px; font-size: 15px; font-weight: 600; color: var(--muted);
+  border-bottom: 2px solid transparent; cursor: pointer;
+}
+.tabs .tab:hover { color: var(--fg); }
+.tabs .tab.active { color: var(--pick); border-bottom-color: var(--pick); }
+
+
+/* 현황 제목 옆 '사이트에서 열기' 아이콘 */
+.open-inline {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; padding: 0; margin-left: 2px;
+  border: 1px solid var(--line); border-radius: 6px;
+  background: var(--surface); color: var(--muted); cursor: pointer;
+}
+.open-inline svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.open-inline:hover { color: var(--pick); border-color: var(--pick); background: var(--pick-soft); }
+.section-heading .selection-hint { margin-left: auto; }
+
+
+/* ------------------------------------------------------------ 내 예약 */
+
+/* button 규칙(display:inline-flex)이 브라우저 기본 [hidden] 을 이겨서
+   el.region.hidden = true 가 먹지 않는다. 숨김은 무엇보다 세야 한다. */
+[hidden] { display: none !important; }
+
+/* 현황 제목 옆 날짜. 숫자만 있으면 언제 것인지 알 수 없다. */
+.head-date {
+  margin-left: 6px; color: var(--muted); font-size: 13px; font-weight: 500;
+  letter-spacing: 0; font-variant-numeric: tabular-nums;
+}
+.head-date:empty { display: none; }
+
+.span-control { display: flex; flex: none; align-items: center; gap: 5px; }
+.span-control > svg { width: 14px; height: 14px; color: var(--faint); }
+.span-control select { min-height: 34px; padding: 2px 4px; border: 0; border-radius: 5px; background: var(--surface); font-size: 15px; font-weight: 500; cursor: pointer; }
+
+.mine-wrap { padding: 8px; }
+/* 훑는 동안에도 목록은 채워진다. 흐리게만 두고 누르는 건 막지 않는다 — 한 달이면 꽤 걸린다. */
+.mine-wrap[aria-busy="true"] { opacity: .75; }
+.mine-wrap > .hint { padding: 16px 10px; margin: 0; }
+.mine-list { list-style: none; margin: 0; padding: 0; }
+.mine-list li {
+  display: flex; align-items: flex-start; gap: 9px; padding: 10px;
+  margin-bottom: 5px; border: 1px solid var(--line); border-radius: 9px;
+  font-size: 14px; cursor: pointer;
+}
+.mine-list li:last-child { margin-bottom: 0; }
+.mine-list li:hover { background: var(--pick-soft); border-color: var(--pick); }
+.mi-kind {
+  flex: none; margin-top: 2px; padding: 2px 7px; border-radius: 6px;
+  font-size: 11px; font-weight: 650; letter-spacing: .2px;
+  background: var(--pick-soft); color: var(--pick);
+}
+.mi-kind.car { background: var(--free); color: var(--fg); }
+.mi-main { display: block; flex: 1; min-width: 0; }
+.mi-when { font-weight: 600; font-variant-numeric: tabular-nums; }
+.mi-span { color: var(--muted); font-weight: 500; font-size: 13px; }
+.mi-status { margin-left: 6px; color: var(--muted); font-size: 12px; }
+.mi-sub { display: flex; gap: 6px; margin-top: 2px; color: var(--muted); font-size: 13px; }
+.mi-room { flex: none; max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mi-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mi-title::before { content: "·"; margin-right: 6px; color: var(--faint); }
+.mi-why { flex: none; margin-top: 3px; color: var(--faint); font-size: 11px; white-space: nowrap; }
+
+
+/* 선택 상황에 따라 바뀌는 실행 버튼들 */
+.actions { display: flex; flex-direction: column; gap: 6px; }
+button.danger {
+  background: var(--danger); color: #fff; border-color: var(--danger); font-weight: 700;
+}
+button.danger:hover { filter: brightness(1.08); }
+.pick-list li.cancel { border-color: var(--danger); }
+.pick-list li.cancel .pk-room { color: var(--danger); }
+
+
+/* 내 예약 목록의 취소 버튼 */
+.mi-cancel {
+  flex: none; margin-left: 6px; padding: 3px 9px; font-size: 11px; font-weight: 600;
+  color: var(--danger); background: transparent;
+  border: 1px solid var(--line); border-radius: 6px; cursor: pointer;
+}
+.mi-cancel:hover:not(:disabled) { background: var(--danger); color: #fff; border-color: var(--danger); }
+.mi-cancel:disabled { color: var(--muted); cursor: not-allowed; opacity: .55; }
+
+/* ---------------------------------------------------- 차량 신청 칸 */
+
+.car-fields { display: block; }
+.car-fields .req {
+  font-size: 11px; font-weight: 600; color: var(--danger, #c0392b);
+  border: 1px solid currentColor; border-radius: 4px; padding: 0 4px; margin-left: 4px;
+  vertical-align: 1px;
+}
+#carWho { margin: 4px 0 0; }
+
+/* 수정 중임을 알리는 줄. 기존 예약을 지우고 다시 넣는 일이라 눈에 띄어야 한다. */
+.edit-note {
+  margin: 8px 0 0; padding: 8px 10px; border-radius: 6px;
+  background: color-mix(in srgb, var(--accent, #2d7ff9) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent, #2d7ff9) 35%, transparent);
+  font-size: 12px; line-height: 1.5;
+}
+.mi-edit { margin-left: 4px; }

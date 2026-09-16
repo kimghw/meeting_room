@@ -1,0 +1,1420 @@
+
+
+
+<!DOCTYPE HTML>
+<html>
+<head><title>
+	본부공용차량 이용신청
+</title><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><link rel="stylesheet" type="text/css" href="./css/button.css" /><link rel="stylesheet" type="text/css" href="./css/styleSheet.css" /><link rel="stylesheet" type="text/css" href="./css/style.css" />
+    <style type="text/css">
+        body {
+            padding: 10px;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .cal_header {
+            font-size: 9pt;
+            font-weight: bold;
+        }
+
+        .cal_weekend {
+        }
+
+        .cal_cal {
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .lb_large {
+            font-size: 13pt;
+            font-weight: bold;
+            height: 70px;
+            vertical-align: middle;
+        }
+
+        .lb_middle {
+            font-size: 13pt;
+            font-weight: bold;
+        }
+
+        .RadCalendar_Office2007 .rcWeek th {
+            text-align: center !important;
+        }
+
+        .RadCalendar_Office2007 .rcRow .rcOtherMonth {
+            text-align: center !important;
+            vertical-align: top;
+        }
+
+        .RadCalendar_Office2007 .rcRow .rcWeekend {
+            text-align: center !important;
+            vertical-align: top;
+        }
+
+        .RadCalendar_Office2007 .rcRow td {
+            text-align: center !important;
+            vertical-align: top;
+        }
+
+        .RadCalendar_Office2007 .rcWeek th {
+            padding: 0px !important;
+        }
+
+        .RadCalendar_Office2007 .rcRow .rcHover {
+            cursor: pointer !important;
+            border-collapse: separate !important;
+        }
+
+        select, input, div {
+            font-size: 9pt;
+            font-family: 돋움;
+        }
+
+        .div_write {
+            position: absolute;
+            left: 300px;
+            top: 500px;
+            width: 500px;
+            height: auto;
+            border: 0pt solid #313744;
+            font-size: 9pt;
+            border-left: 0;
+            border-left-style: none;
+        }
+
+        .tbl_title {
+            background: #006ac9;
+            color: #fff;
+            text-decoration: none;
+            border: 1px solid #006ac9;
+        }
+
+        .contentsTitle {
+            display: block;
+            font-size: 34px;
+            font-weight: 600;
+            color: #000;
+            padding: 50px 0 35px 0;
+        }
+
+        #CAL_MAIN_wrapper {
+            width: 300px;
+        }
+
+        .cis_title {
+            font-size: 24px;
+            font-family: 나눔고딕,Verdana,Arial,sans-serif;
+            color: rgb(0, 56, 109);
+            font-weight: bolder;
+            letter-spacing: -1pt;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+    <script src="js/jquery-1.7.1.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        function fn_getid(id) {
+            return document.getElementById(id);
+        }
+        function fn_setting() {
+
+            if (!fn_getid("div_popup_bg")) {
+
+                var client_width = document.body.clientWidth;
+                var client_height = document.body.clientHeight;
+                var scroll_top = document.body.scrollTop;
+                var scroll_height = document.body.scrollHeight;
+
+                var obj_c = document.createElement("div");
+                obj_c.id = "div_popup_bg";
+                obj_c.style.cssText = "z-index:98;display:none;position:absolute;top:0;left:0;width:0;height:0;overflow:hidden;padding:0;";
+
+                var o = fn_getid("div_write_bg");
+                o.appendChild(obj_c);
+
+                var div_popup_bg = fn_getid("div_popup_bg");
+                div_popup_bg.style.display = "none";
+                div_popup_bg.style.pixelWidth = client_width;
+                div_popup_bg.style.pixelHeight = client_height;
+                div_popup_bg.style.left = 0;
+                div_popup_bg.style.top = 0;
+                div_popup_bg.style.zindex = 50;
+                div_popup_bg.style.backgroundColor = "#000000";
+                div_popup_bg.style.filter = "alpha(Opacity:60)";
+            }
+
+        }
+
+        function RefreshGrid() {
+            var masterTable = $find("").get_masterTableView();
+            masterTable.rebind();
+        }
+
+        function fn_del(idx, group_idx) {
+            document.getElementById("HF_DEL_YN").value = "N";
+            document.getElementById("HF_IDX").value = idx;
+            document.getElementById("HF_GROUP_IDX").value = group_idx;
+            if (confirm("해당 예약은 동시에 예약신청된 건이 있습니다.\n같이 지우시려면 '확인', \n하나만 지우시려면 '취소'를 눌러주세요")) {
+                document.getElementById("HF_DEL_YN").value = "Y";
+            }
+            __doPostBack('RG_MAIN$ctl00$ctl04$BTN_DEL', '');
+
+
+
+        }
+        function fn_update(idx, group_idx) {
+
+
+
+
+            document.getElementById("HF_UPDATE_YN").value = "N";
+            document.getElementById("HF_IDX").value = idx;
+            document.getElementById("HF_GROUP_IDX").value = group_idx;
+            if (confirm("해당 예약은 동시에 예약신청된 건이 있습니다.\n같이 승인하려면 '확인', \n하나만 승인하시려면 '취소'를 눌러주세요")) {
+                document.getElementById("HF_DEL_YN").value = "Y";
+            }
+            __doPostBack('RG_MAIN$ctl00$ctl04$BTN_UPDATE', '');
+
+
+        }
+
+        function fnReturnCar(ref_seq, idx) {
+            var WindowsFullHeight = $(window).height() ? $(window).height() : window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
+            var WindowsFullWidth = $(window).width() ? $(window).width() : window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
+            var url = "/GAPSU/GeneralAffairs/SurveyWork/BusinessVehicle/BVM_Vehiclelog_Edit.aspx?WTYPE=I&SEQ=" + idx + "&REF_SEQ=" + ref_seq;
+            fncPopUpOpenCustom(url, 'popupBVM_Vehiclelog_View', WindowsFullHeight, 1050, screen.height, screen.width, "", "no", 0, 0);
+
+        }
+
+        function fncPopUpOpenCustom(url, windowName, windowH, windowW, screenH, screenW, isScroll, resizable, minWidth, minheight) {
+            var winW = windowW - parseInt(minWidth);
+            var winH = windowH - parseInt(minheight);
+            var size = "width=" + winW + ", height=" + winH;
+            var xpos = (screenW - winW) / 2;
+            var ypos = (screenH - winH) / 2;
+            var position = "left=" + xpos + ", top=" + ypos;
+
+            if (isScroll == "") { isScroll = "yes"; }
+            if (resizable == "") { resizable = "yes"; }
+
+            var browserAttr = "location=no , menubar=no, resizable=" + resizable + ", toolbar=no, scrollbars=" + isScroll + ", status=no";
+            var attr = size + ", " + position + ", " + browserAttr;
+
+            var objPopup = window.open(url, windowName, attr);
+            objPopup.focus();
+
+            return objPopup;
+        }
+
+        function fnCal() {
+
+
+        }
+
+        function onlyNumber() {
+            var key = event.keyCode;
+            if (!(key == 8 || key == 9 || key == 13 || key == 46 || key == 144 || (key >= 48 && key <= 57) || key == 110 || key == 190)) {
+                event.returnValue = false;
+            }
+        }
+
+        function f1_2008010404() {
+            a = document.getElementById("TXT_USEKM").value;
+            b = document.getElementById("TXT_PREKM").value;
+
+            if (a != "") {
+                for (var i = 0; i < a.length; i++) {
+                    a = a.replace(',', '');
+                }
+                for (var j = 0; j < b.length; j++) {
+                    b = b.replace(',', '');
+                }
+
+                a = a * 1;
+                b = b * 1;
+
+                result = a - b;
+
+
+                var v = document.getElementById('TXT_USEKM').value;
+                v = v.replace(/,/g, '');
+                v = v.replace(/ /g, '');
+                var x = v.split('\n');
+                for (var i = 0; i < a.length; i++) {
+                    a[i] = commify_2008010404(a[i]);
+                } x = x.join('\n');
+                document.getElementById('TXT_USEKM').value = a;
+
+                document.getElementById("TXT_TOTKM").value = result;
+
+                var v = document.getElementById('TXT_TOTKM').value;
+                v = v.replace(/,/g, '');
+                v = v.replace(/ /g, '');
+                var a = v.split('\n');
+                for (var i = 0; i < a.length; i++) {
+                    a[i] = commify_2008010404(a[i]);
+                } a = a.join('\n');
+                document.getElementById('TXT_TOTKM').value = a;
+            }
+            else {
+                document.getElementById('TXT_TOTKM').value = "";
+            }
+
+
+            var v = document.getElementById('TXT_USEKM').value;
+            v = v.replace(/,/g, '');
+            v = v.replace(/ /g, '');
+            var a = v.split('\n');
+            for (var i = 0; i < a.length; i++) {
+                a[i] = commify_2008010404(a[i]);
+            } a = a.join('\n');
+            document.getElementById('TXT_USEKM').value = a;
+
+
+        }
+
+        function commify_2008010404(n) {
+            var reg = /(^[+-]?\d+)(\d{3})/; n += '';
+            while (reg.test(n)) n = n.replace(reg, '$1' + ',' + '$2');
+            return n;
+        }
+
+        function fnview(url, mseq, selectedDate, checkAuth, checkAuth2) {
+            var WindowsFullHeight = $(window).height() ? $(window).height() : window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
+            var WindowsFullWidth = $(window).width() ? $(window).width() : window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
+            WindowsFullHeight = (WindowsFullHeight - 500) / 2;
+            WindowsFullWidth = (WindowsFullWidth - 850) / 2;
+
+            var popUpAttr = "toolbar=0, menubar=0, location=0, directories=0, status=0, scrollbars=1, resizable=1, width=850,height=500, top=" + WindowsFullHeight + ", left=" + WindowsFullWidth;
+
+            var exceptCarSeqNp = ['24', '18', '38', '42', '55', '56', '59', '65', '75']
+            // 서울본부 공용 차량 번호
+            var exceptCarSeqNp2 = ['63']
+
+            
+            if (exceptCarSeqNp.includes(mseq)) {
+                if (checkAuth == "False") {
+                    alert("차량 이용 시 지원팀 정무진 과장(1005)에게 문의 바랍니다.");
+                    return false;
+                }
+                else {
+                    if (confirm("해당 차량은 임원용 차량입니다. 일반 업무에 사용할 수 없습니다.")) {
+                        window.open(url, "detail_" + mseq, popUpAttr);
+                        return false;
+                    }
+                    return false;
+                }
+            }
+            else if (exceptCarSeqNp2.includes(mseq)) {
+                if (checkAuth2 == "False") {
+                    alert("차량 이용 시 지원팀 정무진 과장(1005)에게 문의 바랍니다.");
+                    return false;
+                }
+                else {
+                    window.open(url, "detail_" + mseq, popUpAttr);
+                }
+            }
+            else {
+                window.open(url, "detail_" + mseq, popUpAttr);
+            }
+
+            var selectedUrl = "New_List.aspx?date=" + selectedDate;
+            changeUrl(document.title, selectedUrl, "");
+
+
+            return false;
+        }
+
+        function fnAdmin(url) {
+            window.open(url, "admin", "toolbar=0, menubar=0, location=0, directories=0, status=0, scrollbars=1, resizable=1, width=1400,height=600, top=5, left=50");
+        }
+
+        function changeUrl(title, url, state) {
+            if (typeof (history.pushState) != "undefined") { //브라우저가 지원하는 경우
+                history.pushState(state, title, url);
+            }
+            else {
+                location.href = url; //브라우저가 지원하지 않는 경우 페이지 이동처리
+            }
+        }
+
+        function fnSave() {
+            if (document.getElementById("DDL_CARNAME").value == "0") {
+                alert('렌트할 차량을 선택 하세요.');
+                document.getElementById("DDL_CARNAME").focus();
+                return false;
+            }
+
+            if (document.getElementById("TXT_DRIVER").value == "") {
+                alert('운전자를 선택 하세요.');
+                document.getElementById("TXT_DRIVER").focus();
+                return false;
+            }
+
+            if (document.getElementById("TXT_TITLE").value == "") {
+                alert('사용목적을 입력 하세요.');
+                document.getElementById("TXT_TITLE").focus();
+                return false;
+            }
+
+            if (document.getElementById("TXT_PLACE").value == "") {
+                alert('행선지를 입력 하세요.');
+                document.getElementById("TXT_PLACE").focus();
+                return false;
+            }
+
+            return true;
+        }
+
+        function fnCancel() {
+            document.getElementById("DDL_CARNAME").value = "0";
+            document.getElementById("TXT_DRIVER").value = "";
+            document.getElementById("TXT_DRIVER_DEPT_NAME").value = "";
+            document.getElementById("hidDriverID").value = "";
+            document.getElementById("TXT_TITLE").value = "";
+            document.getElementById("TXT_PLACE").value = "";
+            document.getElementById("TXT_PASSENGER").value = "";
+
+            return true;
+        }
+
+        function fnDelete() {
+            if (confirm("정말로 삭제하시겠습니까?")) {
+                return true;
+            }
+
+            return false;
+        }
+
+        $(function () {
+            $("#div_write").hide();
+        });
+
+    </script>
+<link href="/intra/intranet/VSDotNet/RentCar/WebResource.axd?d=pjwruSL9fk8wbACliiDmWCiqwIui5jyiB1TC4y1ZeTemMu8XeAOA7INYAUmq9SKOvlQP12bGZKIF0_NMDM1GPiRehJCfNpPoZsK9Jj0jC62wBZnurr0yO4ypDPQpehuzTNoqiA2&amp;t=636038063655584257" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/intra/intranet/VSDotNet/RentCar/WebResource.axd?d=_gHV4eIsE9H9h4F_GVywx_DaPe49QLlwAAaWr8e20Ow_rwube5QUwOfxel-BHYlJ1eZkuQvExF79zRmQGg06pi1VfL_9IWrW-uFbv89XD3Vu8KTe4waNKJStF1_BlJF_nwm9nYMTlLiB8oET5j_1I8Up8RQ1&amp;t=636038063655584257" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/intra/intranet/VSDotNet/RentCar/WebResource.axd?d=B3OPdN9LKm1oyqgO0uIHSg73-gabMn7kTcyFiOHAH80EL82Cudi62jxjJ1LHuFSCwm1T2qZgvP6ZbHPh212TC5N6Pv-stMr6-xt8z3Xbt52fV4prtrv3ZNn-5zJ2DAXlL5vKQOinJ04XiukRElnTw0o-hcY1&amp;t=636038063655584257" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/intra/intranet/VSDotNet/RentCar/WebResource.axd?d=DVq-YytrAsm-pPTQ8PAFqF5Da-RRCgFVsxo3pOYcLj3lct76tGquZ1WJ0WX3S6Bfq-SUWdOzgSw9fP1v0K7_exz6jOtb5XGulOXf-LNzbpexjwoX55ZGtQ2xFsJOb3BJlBl0qMEO8zVGJ0InLXZsAyy3s1nXKyK_EXY81VL10koUdJQz0&amp;t=636038063655584257" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/intra/intranet/VSDotNet/RentCar/WebResource.axd?d=tPj8iVmXWcS0GKeLGy1RReof7mCSSPrdqjgg1hV8HycB0SRGWYok0Iqug8JhJfcK_ZDoQe0icE2N3VUWuHuqAZzmC8CabA0uxADdZlwbRpH1dexh7l8eb-AF-nAeodXh4RtvBw2&amp;t=636038063655584257" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/intra/intranet/VSDotNet/RentCar/WebResource.axd?d=_LoL51RjyLg5wSDHTB3SToWGS4NHPV-lIQhj3H4vQXj2mGFmpTShsNR1Nox3CCKiEq3rEUe62v4f7L-uhQj_hD-Q92r4yqN8ZoOIae8qcW-yla7XBWXAinI5ucNSxggNGjOVsnJtMafHx5Bz80kJMIxpSZSqaoSZjtSwcOq46xGqEgtd0&amp;t=636038063655584257" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /></head>
+<body>
+    <form name="form1" method="post" action="New_List.aspx?s_code=0102010300" id="form1">
+<div>
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="cmVkYWN0ZWQgZm9yIHB1YmxpYyByZXBv" />
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['form1'];
+if (!theForm) {
+    theForm = document.form1;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/intra/intranet/VSDotNet/RentCar/WebResource.axd?d=ju5uyOObVYkZu_UUbAM6EFZ0dBOfVSIhgswFHhnT-RA-VADobsdmtZf0g4ds6LzMvoXKBh4XCDsYQNRy5rhjlShQe101&amp;t=638803284698914358" type="text/javascript"></script>
+
+
+<script src="/intra/intranet/VSDotNet/RentCar/ScriptResource.axd?d=hWw-6LMYDDa5hs7MT8hEmN9FK6KQOgalLjAIH-xxzVHHve587qKeRTB3Zq4p61e0GQiRQ4suRV5EzOxBZg2a262TXCcqbFJZ5ah3nZCiO4cK0n7abWAY8BcNSj7o3vn_N7rByTaoomrOxN0mU3eCOI8G_uYUikw2xKZb9Yw4X81rxkAV0&amp;t=ffffffffa50b82b2" type="text/javascript"></script>
+<script type="text/javascript">
+//<![CDATA[
+if (typeof(Sys) === 'undefined') throw new Error('ASP.NET Ajax 클라이언트측 프레임워크를 로드하지 못했습니다.');
+//]]>
+</script>
+
+<script src="/intra/intranet/VSDotNet/RentCar/ScriptResource.axd?d=Scq6KLut4w6ITXD_7ZtKsiw62xLH523buE4akPEULoio0G5OzJBQW72Y3ErTowFXr3Lfu5eJAbyQaFPO0dtvm1DmozgiJRiE3m2__0np5VgHiJ0R5PzU9MuGKAotOTANgT2PJwmklN-Xkt-yX7XpA_ur4HpYJP6Iw3JGjH2mF2tFGL1UL9QyTO6CJssnlYrHeRabxg2&amp;t=ffffffffa50b82b2" type="text/javascript"></script>
+<script src="/intra/intranet/VSDotNet/RentCar/ScriptResource.axd?d=WnrJ94DXXmTYzUMSAYdCDr3FcLxL6aKG0BPY0MAlITZKt3DL9YPKaFx9FsTkrPTpVusD4wsgN0oqJHJ0ff9QXweu-MuV1THiDuxIpsSs4ov-7xJzpnV2z0419yJb-QBo0-zDxg2&amp;t=ffffffffafda1fd4" type="text/javascript"></script>
+<script src="/intra/intranet/VSDotNet/RentCar/ScriptResource.axd?d=WNCJsp1VQk-bN7zdUNZd34BehnTJzGqZtl9IVA_w2pEbgt6KzXjPjFSMLjk_fgyd4kc-DUdh7cZwPuvClGmWaQAjsGkf0ElR7I4srdjEgSOFDaVNjclnhFa8XPELeGsu3W7QhA2&amp;t=ffffffffafda1fd4" type="text/javascript"></script>
+<script src="/intra/intranet/VSDotNet/RentCar/ScriptResource.axd?d=ifQLZA9QWRuAkQ0VL1fjeHi_D6ztO8O9KQSpDJ0Isw6oYZzMy8U7aLP4PZJ7PXkFSbFuE4crBY1rx56MEreoWa8t-qUdcALQM5xJzqQW3HJ6ZTpPRT6tYK_kBM-4DYYFGoPH07yzGMhxIFK-bUIb77WjNLo1&amp;t=ffffffffafda1fd4" type="text/javascript"></script>
+<script src="/intra/intranet/VSDotNet/RentCar/ScriptResource.axd?d=QJQa_ht2UU8BAoROabGyUfkUEpbiQftN-qLYBTiEGcirvxQnIw6Ph89diwhsRQkJ5HT0RtPmtRHCeDNk9wBJofqlMPvH9Wub48eyW_2KLdCHgOhpGul0c3Soy30XOINrxVJ_PPzWlhS0d1BmoK2zcjQofek1&amp;t=ffffffffafda1fd4" type="text/javascript"></script>
+<script src="/intra/intranet/VSDotNet/RentCar/ScriptResource.axd?d=7riL5IjACdTaEiuy_7vAjDdSUjfQUNDpe1lFl0203LoRVykXxVKJfsoO2tt2no41ORCXqHNk63l901VVjGVkcype0hMeD5jJdjmrMOQUIuaHZ1AlKdfEMZ4Nm6Lv9dx0VKqnpPLRhiiqaelptOilAJlD8V-qqXilElnx0uccRNYX0AYL0&amp;t=ffffffffafda1fd4" type="text/javascript"></script>
+<script src="/intra/intranet/VSDotNet/RentCar/ScriptResource.axd?d=pV1-eLpl0_A3fvPUWbXMer7XJH8hj9fyPjSp9YRj-hYO-bXG6z0mxoeYdnirtpcNyHGHi4eIeCi_QOOdpIlN0Y0FMVrJbpnRNZgL9QHcHxIV5-DGCR_PlCaMi20LVSYN7y4Mr1mvA95rbn4IXl50QOpeXRk1&amp;t=ffffffffafda1fd4" type="text/javascript"></script>
+<div>
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="4FBA0D6A" />
+</div>
+        <input type="hidden" name="HF_DEL_YN" id="HF_DEL_YN" />
+        <input type="hidden" name="HF_IDX" id="HF_IDX" />
+        <input type="hidden" name="HF_GROUP_IDX" id="HF_GROUP_IDX" />
+        <input type="hidden" name="HiddenField2" id="HiddenField2" />
+        <input type="hidden" name="HF_UPDATE_YN" id="HF_UPDATE_YN" />
+        <div>
+            
+
+            <table style="border: 0; width: 1125px; margin-bottom: 20px; border-collapse: collapse;">
+                <colgroup>
+                    <col style="width: 350px;" />
+                    <col />
+                </colgroup>
+                <tr>
+                    <td class="contentsTitle" style="font-size: 18px; padding-top: 20px; padding-bottom: 20px;">
+                        <div class="listTitleContainer" id="headerTitleDiv" style="min-width: 800px">
+                            <table style="width: 100%">
+                                <colgroup>
+                                    <col />
+                                    <col style="width: 340px;" />
+                                    <col />
+                                </colgroup>
+                                <tr>
+                                    <td style="width: 20px;">
+                                        <img src="/GAPSU/images/common/title_ico.png" alt="this is title icon" title="this is title icon" style="vertical-align: middle;" />
+                                    </td>
+                                    <td style="text-align: left">
+                                        <span class="cis_title">본부공용차량 이용신청
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div id="LB_DATEPanel">
+	<span id="LB_DATE" class="lb_middle" style="color:Blue;">2026-09-16 ( Wednesday ) </span>
+</div>
+                                    </td>
+                                </tr>
+                            </table>
+                            <hr style="border-top: solid #04468a 0.2em; margin-top: 10px;" />
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            
+            <script type="text/javascript">
+//<![CDATA[
+Sys.WebForms.PageRequestManager._initialize('ScriptManager1', document.getElementById('form1'));
+Sys.WebForms.PageRequestManager.getInstance()._updateControls(['tRG_MAINPanel','tCAL_MAINPanel','tLB_DATEPanel','tLB_DATE_MPanel','tRadAjaxManager1SU'], ['RG_MAIN','CAL_MAIN'], [], 90);
+//]]>
+</script>
+
+            <!-- 2010.2.929.35 --><div id="RadAjaxManager1SU">
+	<span id="RadAjaxManager1" style="display:none;"></span>
+</div>
+            <div id="RadAjaxLoadingPanel1" class="RadAjax RadAjax_Outlook" style="display:none;">
+	<div class="raDiv">
+		
+            
+	</div><div class="raColor raTransp">
+
+	</div>
+</div>
+            <table style="border: 0; width: 1600px; border-collapse: collapse;">
+                <tr>
+                    <td>
+                        <div id="CAL_MAINPanel">
+	<div id="CAL_MAIN_wrapper"><table id="CAL_MAIN" summary="Calendar" cellspacing="0" class="RadCalendar RadCalendar_Office2007" border="0" style="width:550px;cursor:pointer;">
+		<thead>
+			<tr>
+				<td class="rcTitlebar"><table cellspacing="0" summary="title and navigation" border="0" style="font-size:Medium;font-weight:bold;height:35px;">
+					<tr>
+						<td><a id="CAL_MAIN_FNP" class="rcFastPrev" title="&lt;&lt;" href="#">&lt;&lt;</a></td><td><a id="CAL_MAIN_NP" class="rcPrev" title="&lt;" href="#">&lt;</a></td><td id="CAL_MAIN_Title" class="rcTitle">2026년 9월</td><td><a id="CAL_MAIN_NN" class="rcNext" title=">" href="#">&gt;</a></td><td><a id="CAL_MAIN_FNN" class="rcFastNext" title=">>" href="#">&gt;&gt;</a></td>
+					</tr>
+				</table></td>
+			</tr>
+		</thead><tbody>
+	<tr>
+		<td class="rcMain"><table id="CAL_MAIN_Top" class="rcMainTable" cellspacing="0" summary="2026년 9월" border="0" style="width:550px;">
+	<thead>
+		<tr class="rcWeek">
+			<th id="CAL_MAIN_Top_cs_0" title="일요일" class="cal_header" abbr="일" scope="col" style="background-color:#EFEFEF;height:30px;width:30px;">일</th><th id="CAL_MAIN_Top_cs_1" title="월요일" class="cal_header" abbr="월" scope="col" style="background-color:#EFEFEF;height:30px;width:30px;">월</th><th id="CAL_MAIN_Top_cs_2" title="화요일" class="cal_header" abbr="화" scope="col" style="background-color:#EFEFEF;height:30px;width:30px;">화</th><th id="CAL_MAIN_Top_cs_3" title="수요일" class="cal_header" abbr="수" scope="col" style="background-color:#EFEFEF;height:30px;width:30px;">수</th><th id="CAL_MAIN_Top_cs_4" title="목요일" class="cal_header" abbr="목" scope="col" style="background-color:#EFEFEF;height:30px;width:30px;">목</th><th id="CAL_MAIN_Top_cs_5" title="금요일" class="cal_header" abbr="금" scope="col" style="background-color:#EFEFEF;height:30px;width:30px;">금</th><th id="CAL_MAIN_Top_cs_6" title="토요일" class="cal_header" abbr="토" scope="col" style="background-color:#EFEFEF;height:30px;width:30px;">토</th>
+		</tr>
+	</thead><tbody>
+		<tr class="rcRow">
+			<td class="rcOtherMonth" title="일요일, 8월 30, 2026" style="height:40px;width:30px;"><a href="#">30</a></td><td class="rcOtherMonth" title="월요일, 8월 31, 2026" style="height:40px;width:30px;"><a href="#">31</a></td><td title="화요일, 9월 01, 2026" style="height:40px;width:30px;">1<br><span style='color:red;'>11건</span></td><td title="수요일, 9월 02, 2026" style="height:40px;width:30px;">2<br><span style='color:red;'>15건</span></td><td title="목요일, 9월 03, 2026" style="height:40px;width:30px;">3<br><span style='color:red;'>12건</span></td><td title="금요일, 9월 04, 2026" style="height:40px;width:30px;">4<br><span style='color:red;'>10건</span></td><td class="rcWeekend" title="토요일, 9월 05, 2026" style="height:40px;width:30px;">5<br><span style='color:#3366CC;'>2건</span></td>
+		</tr><tr class="rcRow">
+			<td class="rcWeekend" title="일요일, 9월 06, 2026" style="height:40px;width:30px;"><a href="#">6</a></td><td title="월요일, 9월 07, 2026" style="height:40px;width:30px;">7<br><span style='color:red;'>12건</span></td><td title="화요일, 9월 08, 2026" style="height:40px;width:30px;">8<br><span style='color:red;'>12건</span></td><td title="수요일, 9월 09, 2026" style="height:40px;width:30px;">9<br><span style='color:red;'>12건</span></td><td title="목요일, 9월 10, 2026" style="height:40px;width:30px;">10<br><span style='color:red;'>13건</span></td><td title="금요일, 9월 11, 2026" style="height:40px;width:30px;">11<br><span style='color:red;'>10건</span></td><td class="rcWeekend" title="토요일, 9월 12, 2026" style="height:40px;width:30px;">12<br><span style='color:#3366CC;'>3건</span></td>
+		</tr><tr class="rcRow">
+			<td class="rcWeekend" title="일요일, 9월 13, 2026" style="height:40px;width:30px;">13<br><span style='color:#3366CC;'>2건</span></td><td title="월요일, 9월 14, 2026" style="height:40px;width:30px;">14<br><span style='color:red;'>9건</span></td><td title="화요일, 9월 15, 2026" style="height:40px;width:30px;">15<br><span style='color:red;'>16건</span></td><td class="rcToday" title="수요일, 9월 16, 2026" style="height:40px;width:30px;">16<br><span style='color:red;'>12건</span></td><td title="목요일, 9월 17, 2026" style="height:40px;width:30px;">17<br><span style='color:red;'>14건</span></td><td title="금요일, 9월 18, 2026" style="height:40px;width:30px;">18<br><span style='color:red;'>11건</span></td><td class="rcWeekend" title="토요일, 9월 19, 2026" style="height:40px;width:30px;">19<br><span style='color:#3366CC;'>1건</span></td>
+		</tr><tr class="rcRow">
+			<td class="rcWeekend" title="일요일, 9월 20, 2026" style="height:40px;width:30px;">20<br><span style='color:#3366CC;'>1건</span></td><td title="월요일, 9월 21, 2026" style="height:40px;width:30px;">21<br><span style='color:red;'>12건</span></td><td title="화요일, 9월 22, 2026" style="height:40px;width:30px;">22<br><span style='color:red;'>12건</span></td><td title="수요일, 9월 23, 2026" style="height:40px;width:30px;">23<br><span style='color:#3366CC;'>1건</span></td><td title="목요일, 9월 24, 2026" style="height:40px;width:30px;"><a href="#">24</a></td><td title="금요일, 9월 25, 2026" style="height:40px;width:30px;"><a href="#">25</a></td><td class="rcWeekend" title="토요일, 9월 26, 2026" style="height:40px;width:30px;"><a href="#">26</a></td>
+		</tr><tr class="rcRow">
+			<td class="rcWeekend" title="일요일, 9월 27, 2026" style="height:40px;width:30px;"><a href="#">27</a></td><td title="월요일, 9월 28, 2026" style="height:40px;width:30px;">28<br><span style='color:#3366CC;'>3건</span></td><td title="화요일, 9월 29, 2026" style="height:40px;width:30px;">29<br><span style='color:red;'>10건</span></td><td title="수요일, 9월 30, 2026" style="height:40px;width:30px;">30<br><span style='color:red;'>6건</span></td><td class="rcOtherMonth" title="목요일, 10월 01, 2026" style="height:40px;width:30px;"><a href="#">1</a></td><td class="rcOtherMonth" title="금요일, 10월 02, 2026" style="height:40px;width:30px;"><a href="#">2</a></td><td class="rcOtherMonth" title="토요일, 10월 03, 2026" style="height:40px;width:30px;"><a href="#">3</a></td>
+		</tr><tr class="rcRow">
+			<td class="rcOtherMonth" title="일요일, 10월 04, 2026" style="height:40px;width:30px;"><a href="#">4</a></td><td class="rcOtherMonth" title="월요일, 10월 05, 2026" style="height:40px;width:30px;"><a href="#">5</a></td><td class="rcOtherMonth" title="화요일, 10월 06, 2026" style="height:40px;width:30px;"><a href="#">6</a></td><td class="rcOtherMonth" title="수요일, 10월 07, 2026" style="height:40px;width:30px;"><a href="#">7</a></td><td class="rcOtherMonth" title="목요일, 10월 08, 2026" style="height:40px;width:30px;"><a href="#">8</a></td><td class="rcOtherMonth" title="금요일, 10월 09, 2026" style="height:40px;width:30px;"><a href="#">9</a></td><td class="rcOtherMonth" title="토요일, 10월 10, 2026" style="height:40px;width:30px;"><a href="#">10</a></td>
+		</tr>
+	</tbody>
+</table></td>
+	</tr>
+</tbody>
+	</table><input type="hidden" name="CAL_MAIN_SD" id="CAL_MAIN_SD" value="[]" /><input type="hidden" name="CAL_MAIN_AD" id="CAL_MAIN_AD" value="[[1980,1,1],[2099,12,30],[2026,9,16]]" /></div>
+</div>
+                    </td>
+                    <td style="text-align: left; vertical-align: top; font-size: 12px; line-height: 20px; padding-left: 50px">※ 차량이용시 다음사항을 준수하여 주시기 바랍니다.<br />
+                        <span style="color: red;">- 교통비(자가운전보조금) 비과세 요건 안내 </span>
+                        <br />
+                        <span style="color: black;">&nbsp;&nbsp;· 복지후생규칙 제3조제1항제2호의 교통비(28만원) 중 월 20만원의 금액에 대해서</span><br />
+                        <span style="color: black;">&nbsp;&nbsp;비과세(실비변상적 성질의 급여)를 적용 받기 위해서는 소득세법 시행령 제12조</span><br />
+                        <span style="color: black;">&nbsp;&nbsp;제3항에 따라 다음의 요건을 모두 충족하여야 합니다.</span><br />
+                        <span style="color: black;">&nbsp;&nbsp;1. 종업원의 소유차량을 종업원이 직접 운전할 것(자가운전)</span><br />
+                        <span style="color: black;">&nbsp;&nbsp;2. 사용자(회사)의 업무수행에 이용할 것</span><br />
+                        <span style="color: black;">&nbsp;&nbsp;3. 시내출장 등에 소요된 실제여비를 받지 않을 것</span><br />
+                        <span style="color: black;">&nbsp;&nbsp;4. 소요경비를 당해 사업체의 규칙 등에 의하여 정하여진 지급기준에 따라 받을 것</span><br />
+
+                        <span style="color: black;">&nbsp;&nbsp;· 직원 소유차량(또는 부부 공동명의 차량)을 외근(시내출장) 시 이용하지 않을 경우,</span><br />
+                        <span style="color: black;">&nbsp;&nbsp;과세당국에서 교통비를 과세대상 근로소득으로 보아 비과세 적용에 대해 추징당할</span><br />
+                        <span style="color: black;">&nbsp;&nbsp;위험이 높은 점을 양지하여 주시기 바라며, 외근(시내출장) 시에는 가급적 개인차량을</span><br />
+                        <span style="color: black;">&nbsp;&nbsp;이용하여 주시기 바랍니다.</span><br />
+
+                        <span style="color: red; font-size: 15px; font-weight: bold;">- 만26세이상 임직원만 운전가능</span><br>
+                        - 교통법규 준수요망(위반시 과태료, 범칙금은 운전자 부담)<br />
+                        - 운행 후 주유(지정주유소 : SK신항만 주유소) 및 내부정리<br />
+                        - 반납시 차량반납일지작성 및 차량이상유무 통보<br />
+                        <br />
+                        
+                    ※ 본부 공용차량 이용 및 반납 안내<br />
+                        - 예약 : GA Hanaro ->  업무용차량신청 ->  본부공용차량이용신청 -> 예약<br />
+                        - 주차 : 남측 하나은행 인근에 주차<br />
+                        
+                    - 반납 : GA Hanaro ->  업무용차량신청 ->  본부공용차량이용신청 -> 반납클릭 차량반납일지작성<br />
+                        &emsp;1. 사용자와 운전자가 다를 경우 각각 입력<br />
+                        
+                    &emsp;2. ②주행후 거리에 최종키로수 입력
+                        <br />
+                        &emsp;3. 운행에 따른 비용 중 <span style="color: red;">통행료</span>는 기입하지 말것(지원팀 일괄 기입)<br />
+                        &emsp;4. 그외 주유비<span style="color: red;">(주유시 필수)</span>, 주차료 및 기타 비용은 기입
+                        <br />
+                        &emsp;&emsp;<span style="color: red; font-size: 11px;">* 차량에 비치 된 외상카드로 직접 주유 후 차량 반납시 주유란에 금액 입력(SK신항만주유소) *</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <table>
+                            <tr>
+                                <td style="padding-top: 30px; width: 365px;">
+                                    <span class="cis_title" style="font-size: 18px;">
+                                        <img src="/GAPSU/Images/common/Dot_4.GIF" style="margin-right: 10px" />차량 예약 현황
+                                    </span>
+                                </td>
+                                <td style="padding-top: 30px;">
+                                    <div id="LB_DATE_MPanel">
+	<span id="LB_DATE_M" class="lb_middle" style="color:Blue;">2026-09-16 ( Wednesday ) </span>
+</div>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div style="border: 0pt solid #BABABA; text-align: left; overflow-x: hidden; overflow-y: auto;">
+                            <div id="RG_MAINPanel">
+	<div id="RG_MAIN" class="RadGrid RadGrid_Sitefinity" style="width:1125px;">
+
+	<table cellspacing="0" class="rgMasterTable" rules="cols" border="0" id="RG_MAIN_ctl00" style="border-width:0px;width:100%;border:1pt solid #efefef;border-collapse:collapse;table-layout:auto;empty-cells:show;">
+	<colgroup>
+		<col style="width:0px" />
+		<col style="width:150px" />
+		<col style="width:130px" />
+		<col  />
+	</colgroup>
+<thead>
+		<tr style="display:none;">
+			<th scope="col">&nbsp;</th><th scope="col">차량정보</th><th scope="col">&nbsp;</th><th scope="col">&nbsp;</th>
+		</tr>
+	</thead><tbody>
+	<tr class="rgRow" id="RG_MAIN_ctl00__0" style="background-color:#FAFFFF;">
+		<td class="rgExpandCol" style="width:0px;"><input type="button" name="RG_MAIN$ctl00$ctl04$GECBtnExpandColumn" value=" " onclick="javascript:__doPostBack('RG_MAIN$ctl00$ctl04$GECBtnExpandColumn','')" id="RG_MAIN_ctl00_ctl04_GECBtnExpandColumn" title="Collapse" class="rgCollapse" /></td><td style="width:180px;">
+                                                <span id="RG_MAIN_ctl00_ctl04_LB_BSN"><img src='./icon/green.png' style='padding-right:5px;'></span>
+                                                <b>
+                                                    아반테CN74 (181허4360)</b>
+                                            </td><td align="left" style="width:100px;">
+                                                
+                                            </td><td align="right">
+                                                <span style="padding-right: 140px;">
+                                                    <font color=green>사용중</font></span>
+                                                <input type="button" name="RG_MAIN$ctl00$ctl04$BTN_RESERVATION" value="예약" onclick="return fnview('Admin_View_New.aspx?CARIDX=70&amp;SDATE=2026-09-16','70','2026-09-16','False','True');__doPostBack('RG_MAIN$ctl00$ctl04$BTN_RESERVATION','')" id="RG_MAIN_ctl00_ctl04_BTN_RESERVATION" />
+                                            </td>
+	</tr><tr>
+		<td class="rgExpandCol" style="border-right-width:0;">&nbsp;</td><td align="left" valign="top" colspan="3" style="border-left-width:0;"><table class="rgDetailTable" cellspacing="0" cellpadding="0" border="0" id="RG_MAIN_ctl00_ctl06_Detail10" style="border-width:0px;width:100%;border-collapse:collapse;table-layout:auto;empty-cells:show;">
+			<colgroup>
+		<col style="width:370px" />
+		<col style="width:270px" />
+		<col style="width:250px" />
+		<col  />
+	</colgroup>
+<thead>
+				<tr style="display:none;">
+					<th scope="col">&nbsp;</th><th scope="col">예약시간</th><th scope="col">&nbsp;</th><th scope="col">&nbsp;</th>
+				</tr>
+			</thead><tbody>
+			<tr class="rgRow" id="RG_MAIN_ctl00_ctl06_Detail10__0:0_0">
+				<td style="width:370px;">
+                                                        <table style="width: 100%; border: 0;">
+                                                            <tr>
+                                                                <td style="color: #cccccc; padding-left: 70px; width: 80px; border: 0">ㄴ 운행정보 :
+                                                                </td>
+                                                                <td style="border: 0">
+                                                                    <span style="color: #000;">
+                                                                        내부 점검</span>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td><td style="width:270px;">
+                                                        <span style="text-align: center">
+                                                            26.09.16<span style="font-weight: bold; color: #757575;"> (수) </span><span style="color: #000;">09:00 </span> ~ 26.09.18<span style="font-weight: bold; color: #757575;"> (금) </span><span style="color: #000;">21:00 </span>
+                                                        </span>
+                                                    </td><td align="left" style="width:250px;">
+                                                        김갑동<font style="color: #888888;">(품질팀)</font>
+                                                    </td><td>
+                                                        
+                                                        
+                                                    </td>
+			</tr>
+			</tbody>
+
+		</table></td>
+	</tr><tr class="rgRow" id="RG_MAIN_ctl00__1" style="background-color:#FDFAFF;">
+		<td class="rgExpandCol" style="width:0px;"><input type="button" name="RG_MAIN$ctl00$ctl07$GECBtnExpandColumn" value=" " onclick="javascript:__doPostBack('RG_MAIN$ctl00$ctl07$GECBtnExpandColumn','')" id="RG_MAIN_ctl00_ctl07_GECBtnExpandColumn" title="Collapse" class="rgCollapse" /></td><td style="width:180px;">
+                                                <span id="RG_MAIN_ctl00_ctl07_LB_BSN"><img src='./icon/green.png' style='padding-right:5px;'></span>
+                                                <b>
+                                                    아반테CN74 (181허4359)</b>
+                                            </td><td align="left" style="width:100px;">
+                                                
+                                            </td><td align="right">
+                                                <span style="padding-right: 140px;">
+                                                    <font color=green>사용중</font></span>
+                                                <input type="button" name="RG_MAIN$ctl00$ctl07$BTN_RESERVATION" value="예약" onclick="return fnview('Admin_View_New.aspx?CARIDX=71&amp;SDATE=2026-09-16','71','2026-09-16','False','True');__doPostBack('RG_MAIN$ctl00$ctl07$BTN_RESERVATION','')" id="RG_MAIN_ctl00_ctl07_BTN_RESERVATION" />
+                                            </td>
+	</tr><tr>
+		<td class="rgExpandCol" style="border-right-width:0;">&nbsp;</td><td align="left" valign="top" colspan="3" style="border-left-width:0;"><table class="rgDetailTable" cellspacing="0" cellpadding="0" border="0" id="RG_MAIN_ctl00_ctl09_Detail20" style="border-width:0px;width:100%;border-collapse:collapse;table-layout:auto;empty-cells:show;">
+			<colgroup>
+		<col style="width:370px" />
+		<col style="width:270px" />
+		<col style="width:250px" />
+		<col  />
+	</colgroup>
+<thead>
+				<tr style="display:none;">
+					<th scope="col">&nbsp;</th><th scope="col">예약시간</th><th scope="col">&nbsp;</th><th scope="col">&nbsp;</th>
+				</tr>
+			</thead><tbody>
+			<tr class="rgRow" id="RG_MAIN_ctl00_ctl09_Detail20__1:0_0">
+				<td style="width:370px;">
+                                                        <table style="width: 100%; border: 0;">
+                                                            <tr>
+                                                                <td style="color: #cccccc; padding-left: 70px; width: 80px; border: 0">ㄴ 운행정보 :
+                                                                </td>
+                                                                <td style="border: 0">
+                                                                    <span style="color: #000;">
+                                                                        외부 방문</span>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td><td style="width:270px;">
+                                                        <span style="text-align: center">
+                                                            26.09.15<span style="font-weight: bold; color: #757575;"> (화) </span><span style="color: #000;">16:00 </span> ~ 26.09.17<span style="font-weight: bold; color: #757575;"> (목) </span><span style="color: #000;">20:00 </span>
+                                                        </span>
+                                                    </td><td align="left" style="width:250px;">
+                                                        이을녀<font style="color: #888888;">(인증센터)</font>
+                                                    </td><td>
+                                                        
+                                                        
+                                                    </td>
+			</tr>
+			</tbody>
+
+		</table></td>
+	</tr><tr class="rgRow" id="RG_MAIN_ctl00__2" style="background-color:#FAFFFF;">
+		<td class="rgExpandCol" style="width:0px;"><input type="button" name="RG_MAIN$ctl00$ctl10$GECBtnExpandColumn" value=" " onclick="javascript:__doPostBack('RG_MAIN$ctl00$ctl10$GECBtnExpandColumn','')" id="RG_MAIN_ctl00_ctl10_GECBtnExpandColumn" title="Collapse" class="rgCollapse" /></td><td style="width:180px;">
+                                                <span id="RG_MAIN_ctl00_ctl10_LB_BSN"><img src='./icon/green.png' style='padding-right:5px;'></span>
+                                                <b>
+                                                    아반테CN74 (181허4310)</b>
+                                            </td><td align="left" style="width:100px;">
+                                                
+                                            </td><td align="right">
+                                                <span style="padding-right: 140px;">
+                                                    <font color=green>사용중</font></span>
+                                                <input type="button" name="RG_MAIN$ctl00$ctl10$BTN_RESERVATION" value="예약" onclick="return fnview('Admin_View_New.aspx?CARIDX=72&amp;SDATE=2026-09-16','72','2026-09-16','False','True');__doPostBack('RG_MAIN$ctl00$ctl10$BTN_RESERVATION','')" id="RG_MAIN_ctl00_ctl10_BTN_RESERVATION" />
+                                            </td>
+	</tr><tr>
+		<td class="rgExpandCol" style="border-right-width:0;">&nbsp;</td><td align="left" valign="top" colspan="3" style="border-left-width:0;"><table class="rgDetailTable" cellspacing="0" cellpadding="0" border="0" id="RG_MAIN_ctl00_ctl12_Detail30" style="border-width:0px;width:100%;border-collapse:collapse;table-layout:auto;empty-cells:show;">
+			<colgroup>
+		<col style="width:370px" />
+		<col style="width:270px" />
+		<col style="width:250px" />
+		<col  />
+	</colgroup>
+<thead>
+				<tr style="display:none;">
+					<th scope="col">&nbsp;</th><th scope="col">예약시간</th><th scope="col">&nbsp;</th><th scope="col">&nbsp;</th>
+				</tr>
+			</thead><tbody>
+			<tr class="rgRow" id="RG_MAIN_ctl00_ctl12_Detail30__2:0_0">
+				<td style="width:370px;">
+                                                        <table style="width: 100%; border: 0;">
+                                                            <tr>
+                                                                <td style="color: #cccccc; padding-left: 70px; width: 80px; border: 0">ㄴ 운행정보 :
+                                                                </td>
+                                                                <td style="border: 0">
+                                                                    <span style="color: #000;">
+                                                                        현장 교육</span>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td><td style="width:270px;">
+                                                        <span style="text-align: center">
+                                                            26.09.15<span style="font-weight: bold; color: #757575;"> (화) </span><span style="color: #000;">09:00 </span> ~ 26.09.16<span style="font-weight: bold; color: #757575;"> (수) </span><span style="color: #000;">18:00 </span>
+                                                        </span>
+                                                    </td><td align="left" style="width:250px;">
+                                                        박병수<font style="color: #888888;">(법무팀)</font>
+                                                    </td><td>
+                                                        
+                                                        
+                                                    </td>
+			</tr>
+			</tbody>
+
+		</table></td>
+	</tr><tr class="rgRow" id="RG_MAIN_ctl00__3" style="background-color:#FDFAFF;">
+		<td class="rgExpandCol" style="width:0px;"><input type="button" name="RG_MAIN$ctl00$ctl13$GECBtnExpandColumn" value=" " onclick="javascript:__doPostBack('RG_MAIN$ctl00$ctl13$GECBtnExpandColumn','')" id="RG_MAIN_ctl00_ctl13_GECBtnExpandColumn" title="Collapse" class="rgCollapse" /></td><td style="width:180px;">
+                                                <span id="RG_MAIN_ctl00_ctl13_LB_BSN"><img src='./icon/green.png' style='padding-right:5px;'></span>
+                                                <b>
+                                                    아반테CN74 (181허4309)</b>
+                                            </td><td align="left" style="width:100px;">
+                                                
+                                            </td><td align="right">
+                                                <span style="padding-right: 140px;">
+                                                    <font color=green>사용중</font></span>
+                                                <input type="button" name="RG_MAIN$ctl00$ctl13$BTN_RESERVATION" value="예약" onclick="return fnview('Admin_View_New.aspx?CARIDX=73&amp;SDATE=2026-09-16','73','2026-09-16','False','True');__doPostBack('RG_MAIN$ctl00$ctl13$BTN_RESERVATION','')" id="RG_MAIN_ctl00_ctl13_BTN_RESERVATION" />
+                                            </td>
+	</tr><tr>
+		<td class="rgExpandCol" style="border-right-width:0;">&nbsp;</td><td align="left" valign="top" colspan="3" style="border-left-width:0;"><table class="rgDetailTable" cellspacing="0" cellpadding="0" border="0" id="RG_MAIN_ctl00_ctl15_Detail40" style="border-width:0px;width:100%;border-collapse:collapse;table-layout:auto;empty-cells:show;">
+			<colgroup>
+		<col style="width:370px" />
+		<col style="width:270px" />
+		<col style="width:250px" />
+		<col  />
+	</colgroup>
+<thead>
+				<tr style="display:none;">
+					<th scope="col">&nbsp;</th><th scope="col">예약시간</th><th scope="col">&nbsp;</th><th scope="col">&nbsp;</th>
+				</tr>
+			</thead><tbody>
+			<tr class="rgRow" id="RG_MAIN_ctl00_ctl15_Detail40__3:0_0">
+				<td style="width:370px;">
+                                                        <table style="width: 100%; border: 0;">
+                                                            <tr>
+                                                                <td style="color: #cccccc; padding-left: 70px; width: 80px; border: 0">ㄴ 운행정보 :
+                                                                </td>
+                                                                <td style="border: 0">
+                                                                    <span style="color: #000;">
+                                                                        주간 협의</span>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td><td style="width:270px;">
+                                                        <span style="text-align: center">
+                                                            26.09.16<span style="font-weight: bold; color: #757575;"> (수) </span><span style="color: #000;">09:00 </span> ~ 26.09.16<span style="font-weight: bold; color: #757575;"> (수) </span><span style="color: #000;">18:00 </span>
+                                                        </span>
+                                                    </td><td align="left" style="width:250px;">
+                                                        최정호<font style="color: #888888;">(지원팀)</font>
+                                                    </td><td>
+                                                        
+                                                        
+                                                    </td>
+			</tr>
+			</tbody>
+
+		</table></td>
+	</tr><tr class="rgRow" id="RG_MAIN_ctl00__4" style="background-color:#FAFFFF;">
+		<td class="rgExpandCol" style="width:0px;"><input type="button" name="RG_MAIN$ctl00$ctl16$GECBtnExpandColumn" value=" " onclick="javascript:__doPostBack('RG_MAIN$ctl00$ctl16$GECBtnExpandColumn','')" id="RG_MAIN_ctl00_ctl16_GECBtnExpandColumn" title="Collapse" class="rgCollapse" /></td><td style="width:180px;">
+                                                <span id="RG_MAIN_ctl00_ctl16_LB_BSN"><img src='./icon/green.png' style='padding-right:5px;'></span>
+                                                <b>
+                                                    아반테CN74 (181하1292)</b>
+                                            </td><td align="left" style="width:100px;">
+                                                
+                                            </td><td align="right">
+                                                <span style="padding-right: 140px;">
+                                                    <font color=green>사용중</font></span>
+                                                <input type="button" name="RG_MAIN$ctl00$ctl16$BTN_RESERVATION" value="예약" onclick="return fnview('Admin_View_New.aspx?CARIDX=74&amp;SDATE=2026-09-16','74','2026-09-16','False','True');__doPostBack('RG_MAIN$ctl00$ctl16$BTN_RESERVATION','')" id="RG_MAIN_ctl00_ctl16_BTN_RESERVATION" />
+                                            </td>
+	</tr><tr>
+		<td class="rgExpandCol" style="border-right-width:0;">&nbsp;</td><td align="left" valign="top" colspan="3" style="border-left-width:0;"><table class="rgDetailTable" cellspacing="0" cellpadding="0" border="0" id="RG_MAIN_ctl00_ctl18_Detail50" style="border-width:0px;width:100%;border-collapse:collapse;table-layout:auto;empty-cells:show;">
+			<colgroup>
+		<col style="width:370px" />
+		<col style="width:270px" />
+		<col style="width:250px" />
+		<col  />
+	</colgroup>
+<thead>
+				<tr style="display:none;">
+					<th scope="col">&nbsp;</th><th scope="col">예약시간</th><th scope="col">&nbsp;</th><th scope="col">&nbsp;</th>
+				</tr>
+			</thead><tbody>
+			<tr class="rgRow" id="RG_MAIN_ctl00_ctl18_Detail50__4:0_0">
+				<td style="width:370px;">
+                                                        <table style="width: 100%; border: 0;">
+                                                            <tr>
+                                                                <td style="color: #cccccc; padding-left: 70px; width: 80px; border: 0">ㄴ 운행정보 :
+                                                                </td>
+                                                                <td style="border: 0">
+                                                                    <span style="color: #000;">
+                                                                        차량 점검</span>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td><td style="width:270px;">
+                                                        <span style="text-align: center">
+                                                            26.09.16<span style="font-weight: bold; color: #757575;"> (수) </span><span style="color: #000;">09:00 </span> ~ 26.09.16<span style="font-weight: bold; color: #757575;"> (수) </span><span style="color: #000;">18:00 </span>
+                                                        </span>
+                                                    </td><td align="left" style="width:250px;">
+                                                        정무진<font style="color: #888888;">(지원팀)</font>
+                                                    </td><td>
+                                                        
+                                                        
+                                                    </td>
+			</tr>
+			</tbody>
+
+		</table></td>
+	</tr><tr class="rgRow" id="RG_MAIN_ctl00__5" style="background-color:#FDFAFF;">
+		<td class="rgExpandCol" style="width:0px;"><input type="button" name="RG_MAIN$ctl00$ctl19$GECBtnExpandColumn" value=" " onclick="javascript:__doPostBack('RG_MAIN$ctl00$ctl19$GECBtnExpandColumn','')" id="RG_MAIN_ctl00_ctl19_GECBtnExpandColumn" title="Collapse" class="rgCollapse" /></td><td style="width:180px;">
+                                                <span id="RG_MAIN_ctl00_ctl19_LB_BSN"><img src='./icon/green.png' style='padding-right:5px;'></span>
+                                                <b>
+                                                    쏘나타DN2 (203도7306)</b>
+                                            </td><td align="left" style="width:100px;">
+                                                
+                                            </td><td align="right">
+                                                <span style="padding-right: 140px;">
+                                                    <font color=green>사용중</font></span>
+                                                <input type="button" name="RG_MAIN$ctl00$ctl19$BTN_RESERVATION" value="예약" onclick="return fnview('Admin_View_New.aspx?CARIDX=31&amp;SDATE=2026-09-16','31','2026-09-16','False','True');__doPostBack('RG_MAIN$ctl00$ctl19$BTN_RESERVATION','')" id="RG_MAIN_ctl00_ctl19_BTN_RESERVATION" />
+                                            </td>
+	</tr><tr>
+		<td class="rgExpandCol" style="border-right-width:0;">&nbsp;</td><td align="left" valign="top" colspan="3" style="border-left-width:0;"><table class="rgDetailTable" cellspacing="0" cellpadding="0" border="0" id="RG_MAIN_ctl00_ctl21_Detail60" style="border-width:0px;width:100%;border-collapse:collapse;table-layout:auto;empty-cells:show;">
+			<colgroup>
+		<col style="width:370px" />
+		<col style="width:270px" />
+		<col style="width:250px" />
+		<col  />
+	</colgroup>
+<thead>
+				<tr style="display:none;">
+					<th scope="col">&nbsp;</th><th scope="col">예약시간</th><th scope="col">&nbsp;</th><th scope="col">&nbsp;</th>
+				</tr>
+			</thead><tbody>
+			<tr class="rgRow" id="RG_MAIN_ctl00_ctl21_Detail60__5:0_0">
+				<td style="width:370px;">
+                                                        <table style="width: 100%; border: 0;">
+                                                            <tr>
+                                                                <td style="color: #cccccc; padding-left: 70px; width: 80px; border: 0">ㄴ 운행정보 :
+                                                                </td>
+                                                                <td style="border: 0">
+                                                                    <span style="color: #000;">
+                                                                        외부 입회</span>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td><td style="width:270px;">
+                                                        <span style="text-align: center">
+                                                            26.09.16<span style="font-weight: bold; color: #757575;"> (수) </span><span style="color: #000;">13:00 </span> ~ 26.09.16<span style="font-weight: bold; color: #757575;"> (수) </span><span style="color: #000;">18:00 </span>
+                                                        </span>
+                                                    </td><td align="left" style="width:250px;">
+                                                        강기동<font style="color: #888888;">(인증센터)</font>
+                                                    </td><td>
+                                                        
+                                                        
+                                                    </td>
+			</tr>
+			</tbody>
+
+		</table></td>
+	</tr><tr class="rgRow" id="RG_MAIN_ctl00__6" style="background-color:#FAFFFF;">
+		<td class="rgExpandCol" style="width:0px;"><input type="button" name="RG_MAIN$ctl00$ctl22$GECBtnExpandColumn" value=" " onclick="javascript:__doPostBack('RG_MAIN$ctl00$ctl22$GECBtnExpandColumn','')" id="RG_MAIN_ctl00_ctl22_GECBtnExpandColumn" title="Collapse" class="rgCollapse" /></td><td style="width:180px;">
+                                                <span id="RG_MAIN_ctl00_ctl22_LB_BSN"><img src='./icon/green.png' style='padding-right:5px;'></span>
+                                                <b>
+                                                    쏘나타DN2 (203도7395)</b>
+                                            </td><td align="left" style="width:100px;">
+                                                
+                                            </td><td align="right">
+                                                <span style="padding-right: 140px;">
+                                                    <font color=green>사용중</font></span>
+                                                <input type="button" name="RG_MAIN$ctl00$ctl22$BTN_RESERVATION" value="예약" onclick="return fnview('Admin_View_New.aspx?CARIDX=32&amp;SDATE=2026-09-16','32','2026-09-16','False','True');__doPostBack('RG_MAIN$ctl00$ctl22$BTN_RESERVATION','')" id="RG_MAIN_ctl00_ctl22_BTN_RESERVATION" />
+                                            </td>
+	</tr><tr>
+		<td class="rgExpandCol" style="border-right-width:0;">&nbsp;</td><td align="left" valign="top" colspan="3" style="border-left-width:0;"><table class="rgDetailTable" cellspacing="0" cellpadding="0" border="0" id="RG_MAIN_ctl00_ctl24_Detail70" style="border-width:0px;width:100%;border-collapse:collapse;table-layout:auto;empty-cells:show;">
+			<colgroup>
+		<col style="width:370px" />
+		<col style="width:270px" />
+		<col style="width:250px" />
+		<col  />
+	</colgroup>
+<thead>
+				<tr style="display:none;">
+					<th scope="col">&nbsp;</th><th scope="col">예약시간</th><th scope="col">&nbsp;</th><th scope="col">&nbsp;</th>
+				</tr>
+			</thead><tbody>
+			<tr class="rgRow" id="RG_MAIN_ctl00_ctl24_Detail70__6:0_0">
+				<td style="width:370px;">
+                                                        <table style="width: 100%; border: 0;">
+                                                            <tr>
+                                                                <td style="color: #cccccc; padding-left: 70px; width: 80px; border: 0">ㄴ 운행정보 :
+                                                                </td>
+                                                                <td style="border: 0">
+                                                                    <span style="color: #000;">
+                                                                        현장 점검</span>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td><td style="width:270px;">
+                                                        <span style="text-align: center">
+                                                            26.09.16<span style="font-weight: bold; color: #757575;"> (수) </span><span style="color: #000;">07:00 </span> ~ 26.09.16<span style="font-weight: bold; color: #757575;"> (수) </span><span style="color: #000;">18:00 </span>
+                                                        </span>
+                                                    </td><td align="left" style="width:250px;">
+                                                        조경수<font style="color: #888888;">(연수팀)</font>
+                                                    </td><td>
+                                                        
+                                                        
+                                                    </td>
+			</tr>
+			</tbody>
+
+		</table></td>
+	</tr><tr class="rgRow" id="RG_MAIN_ctl00__7" style="background-color:#FDFAFF;">
+		<td class="rgExpandCol" style="width:0px;"><input type="button" name="RG_MAIN$ctl00$ctl25$GECBtnExpandColumn" value=" " onclick="javascript:__doPostBack('RG_MAIN$ctl00$ctl25$GECBtnExpandColumn','')" id="RG_MAIN_ctl00_ctl25_GECBtnExpandColumn" title="Collapse" class="rgCollapse" /></td><td style="width:180px;">
+                                                <span id="RG_MAIN_ctl00_ctl25_LB_BSN"><img src='./icon/green.png' style='padding-right:5px;'></span>
+                                                <b>
+                                                    쏘나타DN2 (164주9102)</b>
+                                            </td><td align="left" style="width:100px;">
+                                                
+                                            </td><td align="right">
+                                                <span style="padding-right: 140px;">
+                                                    <font color=green>사용중</font></span>
+                                                <input type="button" name="RG_MAIN$ctl00$ctl25$BTN_RESERVATION" value="예약" onclick="return fnview('Admin_View_New.aspx?CARIDX=33&amp;SDATE=2026-09-16','33','2026-09-16','False','True');__doPostBack('RG_MAIN$ctl00$ctl25$BTN_RESERVATION','')" id="RG_MAIN_ctl00_ctl25_BTN_RESERVATION" />
+                                            </td>
+	</tr><tr>
+		<td class="rgExpandCol" style="border-right-width:0;">&nbsp;</td><td align="left" valign="top" colspan="3" style="border-left-width:0;"><table class="rgDetailTable" cellspacing="0" cellpadding="0" border="0" id="RG_MAIN_ctl00_ctl27_Detail80" style="border-width:0px;width:100%;border-collapse:collapse;table-layout:auto;empty-cells:show;">
+			<colgroup>
+		<col style="width:370px" />
+		<col style="width:270px" />
+		<col style="width:250px" />
+		<col  />
+	</colgroup>
+<thead>
+				<tr style="display:none;">
+					<th scope="col">&nbsp;</th><th scope="col">예약시간</th><th scope="col">&nbsp;</th><th scope="col">&nbsp;</th>
+				</tr>
+			</thead><tbody>
+			<tr class="rgRow" id="RG_MAIN_ctl00_ctl27_Detail80__7:0_0">
+				<td style="width:370px;">
+                                                        <table style="width: 100%; border: 0;">
+                                                            <tr>
+                                                                <td style="color: #cccccc; padding-left: 70px; width: 80px; border: 0">ㄴ 운행정보 :
+                                                                </td>
+                                                                <td style="border: 0">
+                                                                    <span style="color: #000;">
+                                                                        현장 참관</span>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td><td style="width:270px;">
+                                                        <span style="text-align: center">
+                                                            26.09.15<span style="font-weight: bold; color: #757575;"> (화) </span><span style="color: #000;">16:10 </span> ~ 26.09.16<span style="font-weight: bold; color: #757575;"> (수) </span><span style="color: #000;">21:00 </span>
+                                                        </span>
+                                                    </td><td align="left" style="width:250px;">
+                                                        윤신우<font style="color: #888888;">(연구2팀)</font>
+                                                    </td><td>
+                                                        
+                                                        
+                                                    </td>
+			</tr>
+			</tbody>
+
+		</table></td>
+	</tr><tr class="rgRow" id="RG_MAIN_ctl00__8" style="background-color:#FAFFFF;">
+		<td class="rgExpandCol" style="width:0px;"><input type="button" name="RG_MAIN$ctl00$ctl28$GECBtnExpandColumn" value=" " onclick="javascript:__doPostBack('RG_MAIN$ctl00$ctl28$GECBtnExpandColumn','')" id="RG_MAIN_ctl00_ctl28_GECBtnExpandColumn" title="Collapse" class="rgCollapse" /></td><td style="width:180px;">
+                                                <span id="RG_MAIN_ctl00_ctl28_LB_BSN"><img src='./icon/green.png' style='padding-right:5px;'></span>
+                                                <b>
+                                                    쏘나타DN2 (166더6581)</b>
+                                            </td><td align="left" style="width:100px;">
+                                                
+                                            </td><td align="right">
+                                                <span style="padding-right: 140px;">
+                                                    <font color=green>사용중</font></span>
+                                                <input type="button" name="RG_MAIN$ctl00$ctl28$BTN_RESERVATION" value="예약" onclick="return fnview('Admin_View_New.aspx?CARIDX=34&amp;SDATE=2026-09-16','34','2026-09-16','False','True');__doPostBack('RG_MAIN$ctl00$ctl28$BTN_RESERVATION','')" id="RG_MAIN_ctl00_ctl28_BTN_RESERVATION" />
+                                            </td>
+	</tr><tr>
+		<td class="rgExpandCol" style="border-right-width:0;">&nbsp;</td><td align="left" valign="top" colspan="3" style="border-left-width:0;"><table class="rgDetailTable" cellspacing="0" cellpadding="0" border="0" id="RG_MAIN_ctl00_ctl30_Detail90" style="border-width:0px;width:100%;border-collapse:collapse;table-layout:auto;empty-cells:show;">
+			<colgroup>
+		<col style="width:370px" />
+		<col style="width:270px" />
+		<col style="width:250px" />
+		<col  />
+	</colgroup>
+<thead>
+				<tr style="display:none;">
+					<th scope="col">&nbsp;</th><th scope="col">예약시간</th><th scope="col">&nbsp;</th><th scope="col">&nbsp;</th>
+				</tr>
+			</thead><tbody>
+			<tr class="rgRow" id="RG_MAIN_ctl00_ctl30_Detail90__8:0_0">
+				<td style="width:370px;">
+                                                        <table style="width: 100%; border: 0;">
+                                                            <tr>
+                                                                <td style="color: #cccccc; padding-left: 70px; width: 80px; border: 0">ㄴ 운행정보 :
+                                                                </td>
+                                                                <td style="border: 0">
+                                                                    <span style="color: #000;">
+                                                                        학회 참석</span>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td><td style="width:270px;">
+                                                        <span style="text-align: center">
+                                                            26.09.16<span style="font-weight: bold; color: #757575;"> (수) </span><span style="color: #000;">09:00 </span> ~ 26.09.17<span style="font-weight: bold; color: #757575;"> (목) </span><span style="color: #000;">18:00 </span>
+                                                        </span>
+                                                    </td><td align="left" style="width:250px;">
+                                                        장임철<font style="color: #888888;">(연구2팀)</font>
+                                                    </td><td>
+                                                        
+                                                        
+                                                    </td>
+			</tr>
+			</tbody>
+
+		</table></td>
+	</tr><tr class="rgRow" id="RG_MAIN_ctl00__9" style="background-color:#FDFAFF;">
+		<td class="rgExpandCol" style="width:0px;"><input type="button" name="RG_MAIN$ctl00$ctl31$GECBtnExpandColumn" value=" " onclick="javascript:__doPostBack('RG_MAIN$ctl00$ctl31$GECBtnExpandColumn','')" id="RG_MAIN_ctl00_ctl31_GECBtnExpandColumn" title="Collapse" class="rgCollapse" /></td><td style="width:180px;">
+                                                <span id="RG_MAIN_ctl00_ctl31_LB_BSN"><img src='./icon/green.png' style='padding-right:5px;'></span>
+                                                <b>
+                                                    소나타DN4 (231호5994)</b>
+                                            </td><td align="left" style="width:100px;">
+                                                
+                                            </td><td align="right">
+                                                <span style="padding-right: 140px;">
+                                                    <font color=green>사용중</font></span>
+                                                <input type="button" name="RG_MAIN$ctl00$ctl31$BTN_RESERVATION" value="예약" onclick="return fnview('Admin_View_New.aspx?CARIDX=76&amp;SDATE=2026-09-16','76','2026-09-16','False','True');__doPostBack('RG_MAIN$ctl00$ctl31$BTN_RESERVATION','')" id="RG_MAIN_ctl00_ctl31_BTN_RESERVATION" />
+                                            </td>
+	</tr><tr>
+		<td class="rgExpandCol" style="border-right-width:0;">&nbsp;</td><td align="left" valign="top" colspan="3" style="border-left-width:0;"><table class="rgDetailTable" cellspacing="0" cellpadding="0" border="0" id="RG_MAIN_ctl00_ctl33_Detail100" style="border-width:0px;width:100%;border-collapse:collapse;table-layout:auto;empty-cells:show;">
+			<colgroup>
+		<col style="width:370px" />
+		<col style="width:270px" />
+		<col style="width:250px" />
+		<col  />
+	</colgroup>
+<thead>
+				<tr style="display:none;">
+					<th scope="col">&nbsp;</th><th scope="col">예약시간</th><th scope="col">&nbsp;</th><th scope="col">&nbsp;</th>
+				</tr>
+			</thead><tbody>
+			<tr class="rgRow" id="RG_MAIN_ctl00_ctl33_Detail100__9:0_0">
+				<td style="width:370px;">
+                                                        <table style="width: 100%; border: 0;">
+                                                            <tr>
+                                                                <td style="color: #cccccc; padding-left: 70px; width: 80px; border: 0">ㄴ 운행정보 :
+                                                                </td>
+                                                                <td style="border: 0">
+                                                                    <span style="color: #000;">
+                                                                        업무 미팅</span>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td><td style="width:270px;">
+                                                        <span style="text-align: center">
+                                                            26.09.16<span style="font-weight: bold; color: #757575;"> (수) </span><span style="color: #000;">12:00 </span> ~ 26.09.16<span style="font-weight: bold; color: #757575;"> (수) </span><span style="color: #000;">20:00 </span>
+                                                        </span>
+                                                    </td><td align="left" style="width:250px;">
+                                                        한계수<font style="color: #888888;">(대외팀)</font>
+                                                    </td><td>
+                                                        
+                                                        
+                                                    </td>
+			</tr>
+			</tbody>
+
+		</table></td>
+	</tr><tr class="rgRow" id="RG_MAIN_ctl00__10" style="background-color:#FAFFFF;">
+		<td class="rgExpandCol" style="width:0px;"><input type="button" name="RG_MAIN$ctl00$ctl34$GECBtnExpandColumn" value=" " onclick="javascript:__doPostBack('RG_MAIN$ctl00$ctl34$GECBtnExpandColumn','')" id="RG_MAIN_ctl00_ctl34_GECBtnExpandColumn" title="Collapse" class="rgCollapse" /></td><td style="width:180px;">
+                                                <span id="RG_MAIN_ctl00_ctl34_LB_BSN"><img src='./icon/green.png' style='padding-right:5px;'></span>
+                                                <b>
+                                                    그랜저 (62가1698)</b>
+                                            </td><td align="left" style="width:100px;">
+                                                [임원용 차량]
+                                            </td><td align="right">
+                                                <span style="padding-right: 140px;">
+                                                    <font color=ORANGE>사용대기</font></span>
+                                                <input type="button" name="RG_MAIN$ctl00$ctl34$BTN_RESERVATION" value="예약" onclick="return fnview('Admin_View_New.aspx?CARIDX=38&amp;SDATE=2026-09-16','38','2026-09-16','False','True');__doPostBack('RG_MAIN$ctl00$ctl34$BTN_RESERVATION','')" id="RG_MAIN_ctl00_ctl34_BTN_RESERVATION" />
+                                            </td>
+	</tr><tr>
+		<td class="rgExpandCol" style="border-right-width:0;">&nbsp;</td><td align="left" valign="top" colspan="3" style="border-left-width:0;"><table class="rgDetailTable" cellspacing="0" cellpadding="0" border="0" id="RG_MAIN_ctl00_ctl36_Detail110" style="border-width:0px;width:100%;border-collapse:collapse;table-layout:auto;empty-cells:show;">
+			<colgroup>
+		<col style="width:370px" />
+		<col style="width:270px" />
+		<col style="width:250px" />
+		<col  />
+	</colgroup>
+<thead>
+				<tr style="display:none;">
+					<th scope="col">&nbsp;</th><th scope="col">예약시간</th><th scope="col">&nbsp;</th><th scope="col">&nbsp;</th>
+				</tr>
+			</thead><tbody>
+			<tr class="rgRow" id="RG_MAIN_ctl00_ctl36_Detail110__10:0_0">
+				<td style="width:370px;">
+                                                        <table style="width: 100%; border: 0;">
+                                                            <tr>
+                                                                <td style="color: #cccccc; padding-left: 70px; width: 80px; border: 0">ㄴ 운행정보 :
+                                                                </td>
+                                                                <td style="border: 0">
+                                                                    <span style="color: #000;">
+                                                                        차량 점검</span>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td><td style="width:270px;">
+                                                        <span style="text-align: center">
+                                                            26.09.16<span style="font-weight: bold; color: #757575;"> (수) </span><span style="color: #000;">09:00 </span> ~ 26.09.16<span style="font-weight: bold; color: #757575;"> (수) </span><span style="color: #000;">18:00 </span>
+                                                        </span>
+                                                    </td><td align="left" style="width:250px;">
+                                                        정무진<font style="color: #888888;">(지원팀)</font>
+                                                    </td><td>
+                                                        
+                                                        
+                                                    </td>
+			</tr>
+			</tbody>
+
+		</table></td>
+	</tr><tr class="rgRow" id="RG_MAIN_ctl00__11" style="background-color:#FDFAFF;">
+		<td class="rgExpandCol" style="width:0px;"> </td><td style="width:180px;">
+                                                <span id="RG_MAIN_ctl00_ctl37_LB_BSN"><img src='./icon/green.png' style='padding-right:5px;'></span>
+                                                <b>
+                                                    그랜저 (189오9673)</b>
+                                            </td><td align="left" style="width:100px;">
+                                                [임원용 차량]
+                                            </td><td align="right">
+                                                <span style="padding-right: 140px;">
+                                                    <font color=blue>예약가능</font></span>
+                                                <input type="button" name="RG_MAIN$ctl00$ctl37$BTN_RESERVATION" value="예약" onclick="return fnview('Admin_View_New.aspx?CARIDX=65&amp;SDATE=2026-09-16','65','2026-09-16','False','True');__doPostBack('RG_MAIN$ctl00$ctl37$BTN_RESERVATION','')" id="RG_MAIN_ctl00_ctl37_BTN_RESERVATION" />
+                                            </td>
+	</tr><tr class="rgRow" id="RG_MAIN_ctl00__12" style="background-color:#FAFFFF;">
+		<td class="rgExpandCol" style="width:0px;"> </td><td style="width:180px;">
+                                                <span id="RG_MAIN_ctl00_ctl40_LB_BSN"><img src='./icon/green.png' style='padding-right:5px;'></span>
+                                                <b>
+                                                    스타리아 (308소4997)</b>
+                                            </td><td align="left" style="width:100px;">
+                                                [지원팀 사전 협의 후 사용가능]
+                                            </td><td align="right">
+                                                <span style="padding-right: 140px;">
+                                                    <font color=blue>예약가능</font></span>
+                                                <input type="button" name="RG_MAIN$ctl00$ctl40$BTN_RESERVATION" value="예약" onclick="return fnview('Admin_View_New.aspx?CARIDX=75&amp;SDATE=2026-09-16','75','2026-09-16','False','True');__doPostBack('RG_MAIN$ctl00$ctl40$BTN_RESERVATION','')" id="RG_MAIN_ctl00_ctl40_BTN_RESERVATION" />
+                                            </td>
+	</tr><tr class="rgRow" id="RG_MAIN_ctl00__13" style="background-color:#FDFAFF;">
+		<td class="rgExpandCol" style="width:0px;"> </td><td style="width:180px;">
+                                                <span id="RG_MAIN_ctl00_ctl43_LB_BSN"><img src='./icon/green.png' style='padding-right:5px;'></span>
+                                                <b>
+                                                    카니발 (167수1756)</b>
+                                            </td><td align="left" style="width:100px;">
+                                                [지원팀 사전 협의 후 사용가능]
+                                            </td><td align="right">
+                                                <span style="padding-right: 140px;">
+                                                    <font color=blue>예약가능</font></span>
+                                                <input type="button" name="RG_MAIN$ctl00$ctl43$BTN_RESERVATION" value="예약" onclick="return fnview('Admin_View_New.aspx?CARIDX=56&amp;SDATE=2026-09-16','56','2026-09-16','False','True');__doPostBack('RG_MAIN$ctl00$ctl43$BTN_RESERVATION','')" id="RG_MAIN_ctl00_ctl43_BTN_RESERVATION" />
+                                            </td>
+	</tr><tr class="rgRow" id="RG_MAIN_ctl00__14" style="background-color:#FAFFFF;">
+		<td class="rgExpandCol" style="width:0px;"><input type="button" name="RG_MAIN$ctl00$ctl46$GECBtnExpandColumn" value=" " onclick="javascript:__doPostBack('RG_MAIN$ctl00$ctl46$GECBtnExpandColumn','')" id="RG_MAIN_ctl00_ctl46_GECBtnExpandColumn" title="Collapse" class="rgCollapse" /></td><td style="width:180px;">
+                                                <span id="RG_MAIN_ctl00_ctl46_LB_BSN"><img src='./icon/green.png' style='padding-right:5px;'></span>
+                                                <b>
+                                                    소나타 (223어7393)</b>
+                                            </td><td align="left" style="width:100px;">
+                                                [서울본부 전용 차량]
+                                            </td><td align="right">
+                                                <span style="padding-right: 140px;">
+                                                    <font color=green>사용중</font></span>
+                                                <input type="button" name="RG_MAIN$ctl00$ctl46$BTN_RESERVATION" value="예약" onclick="return fnview('Admin_View_New.aspx?CARIDX=63&amp;SDATE=2026-09-16','63','2026-09-16','False','True');__doPostBack('RG_MAIN$ctl00$ctl46$BTN_RESERVATION','')" id="RG_MAIN_ctl00_ctl46_BTN_RESERVATION" />
+                                            </td>
+	</tr><tr>
+		<td class="rgExpandCol" style="border-right-width:0;">&nbsp;</td><td align="left" valign="top" colspan="3" style="border-left-width:0;"><table class="rgDetailTable" cellspacing="0" cellpadding="0" border="0" id="RG_MAIN_ctl00_ctl48_Detail150" style="border-width:0px;width:100%;border-collapse:collapse;table-layout:auto;empty-cells:show;">
+			<colgroup>
+		<col style="width:370px" />
+		<col style="width:270px" />
+		<col style="width:250px" />
+		<col  />
+	</colgroup>
+<thead>
+				<tr style="display:none;">
+					<th scope="col">&nbsp;</th><th scope="col">예약시간</th><th scope="col">&nbsp;</th><th scope="col">&nbsp;</th>
+				</tr>
+			</thead><tbody>
+			<tr class="rgRow" id="RG_MAIN_ctl00_ctl48_Detail150__14:0_0">
+				<td style="width:370px;">
+                                                        <table style="width: 100%; border: 0;">
+                                                            <tr>
+                                                                <td style="color: #cccccc; padding-left: 70px; width: 80px; border: 0">ㄴ 운행정보 :
+                                                                </td>
+                                                                <td style="border: 0">
+                                                                    <span style="color: #000;">
+                                                                        기술 회의</span>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td><td style="width:270px;">
+                                                        <span style="text-align: center">
+                                                            26.09.15<span style="font-weight: bold; color: #757575;"> (화) </span><span style="color: #000;">06:00 </span> ~ 26.09.18<span style="font-weight: bold; color: #757575;"> (금) </span><span style="color: #000;">20:00 </span>
+                                                        </span>
+                                                    </td><td align="left" style="width:250px;">
+                                                        오갑진<font style="color: #888888;">(혁신센터)</font>
+                                                    </td><td>
+                                                        
+                                                        
+                                                    </td>
+			</tr>
+			</tbody>
+
+		</table></td>
+	</tr><tr class="rgRow" id="RG_MAIN_ctl00__15" style="background-color:#FDFAFF;">
+		<td class="rgExpandCol" style="width:0px;"> </td><td style="width:180px;">
+                                                <span id="RG_MAIN_ctl00_ctl49_LB_BSN"><img src='./icon/green.png' style='padding-right:5px;'></span>
+                                                <b>
+                                                    소나타 (192호7954)</b>
+                                            </td><td align="left" style="width:100px;">
+                                                [협약본부 전용 차량]
+                                            </td><td align="right">
+                                                <span style="padding-right: 140px;">
+                                                    <font color=blue>예약가능</font></span>
+                                                <input type="button" name="RG_MAIN$ctl00$ctl49$BTN_RESERVATION" value="예약" onclick="return fnview('Admin_View_New.aspx?CARIDX=62&amp;SDATE=2026-09-16','62','2026-09-16','False','True');__doPostBack('RG_MAIN$ctl00$ctl49$BTN_RESERVATION','')" id="RG_MAIN_ctl00_ctl49_BTN_RESERVATION" />
+                                            </td>
+	</tr>
+	</tbody>
+
+</table><input id="RG_MAIN_ClientState" name="RG_MAIN_ClientState" type="hidden" />
+		</div>
+
+</div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+            
+        </div>
+        <script type="text/javascript">
+            var first = 1;
+            function fn_help_close() {
+
+                var o = document.getElementById("div_help");
+                o.style.width = "0";
+                var o_bg = fn_getid("div_popup_bg");
+                o_bg.style.display = "none";
+
+                first = 0;
+                CookieSet(365);
+            }
+            function fn_help() {
+                if (auth == 0) {
+                    setTimeout(fn_help, 1000);
+                    return false;
+                }
+
+                var o = document.getElementById("div_help");
+
+                o.style.width = "0";
+                o.style.zIndex = 100;
+                o.style.top = 110;
+
+
+                var o_bg = fn_getid("div_popup_bg");
+                o_bg.style.display = "none";
+
+
+            }
+            function fn_getid(id) {
+                return document.getElementById(id);
+            }
+            function fn_setting() {
+
+                var client_width = document.body.clientWidth;
+                var client_height = document.body.clientHeight;
+                var scroll_top = document.body.scrollTop;
+                var scroll_height = document.body.scrollHeight;
+
+                var obj_c = document.createElement("div");
+                obj_c.id = "div_popup_bg";
+                obj_c.style.cssText = "z-index:98;display:none;position:absolute;top:0;left:0;width:0;height:0;overflow:hidden;padding:0;";
+
+                var o = fn_getid("div_write_bg");
+                o.appendChild(obj_c);
+
+                var div_popup_bg = fn_getid("div_popup_bg");
+                div_popup_bg.style.display = "none";
+                div_popup_bg.style.pixelWidth = client_width;
+                div_popup_bg.style.pixelHeight = client_height;
+                div_popup_bg.style.left = 0;
+                div_popup_bg.style.top = 0;
+                div_popup_bg.style.zindex = 50;
+                div_popup_bg.style.backgroundColor = "#000000";
+                div_popup_bg.style.filter = "alpha(Opacity:60)";
+
+                auth = 1;
+                var temp = getCookie("RentCar");
+                if (first == 1 && temp == "") {
+                    fn_help();
+
+                } else {
+                    first = 0;
+                }
+            }
+
+
+
+            function getCookie(strName) {
+
+                var strArg = new String(strName + "=");
+                var nArgLen, nCookieLen, nEnd;
+                var i = 0, j;
+
+                nArgLen = strArg.length;
+                nCookieLen = document.cookie.length;
+
+                if (nCookieLen > 0) {
+                    while (i < nCookieLen) {
+                        j = i + nArgLen;
+
+                        if (document.cookie.substring(i, j) == strArg) {
+                            nEnd = document.cookie.indexOf(";", j);
+
+                            if (nEnd == -1)
+                                nEnd = document.cookie.length;
+
+                            return unescape(document.cookie.substring(j, nEnd));
+                        }
+
+                        i = document.cookie.indexOf(" ", i) + 1;
+                        if (i == 0) break;
+                    }
+                }
+
+                return ("");
+            }
+
+            function SetCookie(name, value, expiredays) {
+                var today = new Date();
+                today.setDate(today.getDate() + expiredays);
+                document.cookie = name + "=" + escape(value) + "; path=/; expires=" + today.toGMTString() + ";";
+            }
+
+            function CookieSet(dayNum) {
+                SetCookie("RentCar", "checked", dayNum);
+            }
+
+        //window.attachEvent("onload", fn_setting);
+        </script>
+    
+
+<script type="text/javascript">
+//<![CDATA[
+Sys.Application.initialize();
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadAjaxManager, {"_updatePanels":"","ajaxSettings":[{InitControlID : "RG_MAIN",UpdatedControls : [{ControlID:"RG_MAIN",PanelID:""}]},{InitControlID : "CAL_MAIN",UpdatedControls : [{ControlID:"RG_MAIN",PanelID:"RadAjaxLoadingPanel1"},{ControlID:"CAL_MAIN",PanelID:""},{ControlID:"LB_DATE",PanelID:""},{ControlID:"LB_DATE_M",PanelID:""}]}],"clientEvents":{OnRequestStart:"",OnResponseEnd:""},"defaultLoadingPanelID":"","enableAJAX":true,"enableHistory":false,"links":[],"styles":[],"uniqueID":"RadAjaxManager1","updatePanelsRenderMode":0}, null, null, $get("RadAjaxManager1"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadAjaxLoadingPanel, {"initialDelayTime":0,"isSticky":false,"minDisplayTime":0,"skin":"Outlook","transparency":0,"uniqueID":"RadAjaxLoadingPanel1","zIndex":90000}, null, null, $get("RadAjaxLoadingPanel1"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadCalendar, {"_DayRenderChangedDays":{"2026_9_16":["","rcToday"]},"_FormatInfoArray":[["일요일","월요일","화요일","수요일","목요일","금요일","토요일"],["일","월","화","수","목","금","토"],["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월",""],["1","2","3","4","5","6","7","8","9","10","11","12",""],"yyyy\u0027년\u0027 M\u0027월\u0027 d\u0027일\u0027 dddd tt h:mm:ss","yyyy\u0027년\u0027 M\u0027월\u0027 d\u0027일\u0027 dddd","tt h:mm:ss","M\u0027월\u0027 d\u0027일\u0027","ddd, dd MMM yyyy HH\u0027:\u0027mm\u0027:\u0027ss \u0027GMT\u0027","yyyy-MM-dd","tt h:mm","yyyy\u0027-\u0027MM\u0027-\u0027dd\u0027T\u0027HH\u0027:\u0027mm\u0027:\u0027ss","yyyy\u0027-\u0027MM\u0027-\u0027dd HH\u0027:\u0027mm\u0027:\u0027ss\u0027Z\u0027","yyyy\u0027년\u0027 M\u0027월\u0027","오전","오후","-",":",0],"_ViewRepeatableDays":{"2026_9_16":"0001_1_1"},"_ViewsHash":{"CAL_MAIN_Top" : [[2026,9,1], 1]},"_calendarWeekRule":0,"_culture":"ko-KR","_enableKeyboardNavigation":false,"_enableViewSelector":false,"_firstDayOfWeek":7,"_postBackCall":"__doPostBack(\u0027CAL_MAIN\u0027,\u0027@@\u0027)","autoPostBack":true,"clientStateFieldID":"CAL_MAIN_ClientState","enableMultiSelect":false,"enabled":true,"monthYearNavigationSettings":["Today","OK","Cancel","Date is out of range.","False","True","300","1","300","1"],"skin":"Office2007","specialDaysArray":[[,[2026,9,16],1,0,0,0,16,0,,{"SpecialDayStyle_2026_9_16": ["", "rcToday"]}]],"stylesHash":{"DayStyle": ["height:40px;width:30px;", ""],"CalendarTableStyle": ["", "rcMainTable"],"OtherMonthDayStyle": ["height:40px;width:30px;", "rcOtherMonth"],"TitleStyle": ["font-size:Medium;font-weight:bold;height:35px;", ""],"SelectedDayStyle": ["", "rcSelected"],"SelectorStyle": ["background-color:#EFEFEF;height:30px;width:30px;", "cal_header"],"DisabledDayStyle": ["", "rcDisabled"],"OutOfRangeDayStyle": ["", "rcOutOfRange"],"WeekendDayStyle": ["height:40px;width:30px;", "rcWeekend"],"DayOverStyle": ["", "rcHover"],"FastNavigationStyle": ["", "RadCalendarMonthView RadCalendarMonthView_Office2007"],"ViewSelectorStyle": ["", "rcViewSel"]},"titleFormat":"yyyy년 MMMM","useColumnHeadersAsSelectors":false}, null, null, $get("CAL_MAIN"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadGrid, {"ClientID":"RG_MAIN","ClientSettings":{"AllowAutoScrollOnDragDrop":true,"EnableAlternatingItems":false,"ShouldCreateRows":true,"DataBinding":{},"Selecting":{},"Scrolling":{},"Resizing":{},"ClientMessages":{},"KeyboardNavigationSettings":{"AllowActiveRowCycle":false,"EnableKeyboardShortcuts":true,"FocusKey":89,"InitInsertKey":73,"RebindKey":82,"ExitEditInsertModeKey":27,"UpdateInsertItemKey":13,"DeleteActiveRow":127},"Animation":{}},"Skin":"Sitefinity","UniqueID":"RG_MAIN","_activeRowIndex":"","_controlToFocus":"","_currentPageIndex":0,"_editIndexes":"[]","_embeddedSkin":true,"_gridTableViewsData":"[{\"ClientID\":\"RG_MAIN_ctl00\",\"UniqueID\":\"RG_MAIN$ctl00\",\"PageSize\":10,\"PageCount\":1,\"EditMode\":\"EditForms\",\"CurrentPageIndex\":0,\"VirtualItemCount\":0,\"AllowMultiColumnSorting\":false,\"AllowNaturalSort\":true,\"AllowFilteringByColumn\":false,\"IsItemInserted\":false,\"clientDataKeyNames\":[],\"_dataBindTemplates\":false,\"_selectedItemStyle\":\"\",\"_selectedItemStyleClass\":\"rgSelectedRow\",\"_columnsData\":[{\"UniqueName\":\"ExpandColumn\",\"Resizable\":false,\"Reorderable\":false,\"Groupable\":false,\"ColumnType\":\"GridExpandColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn1\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"RD_RESEARVATION\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true}]},{\"ClientID\":\"RG_MAIN_ctl00_ctl06_Detail10\",\"UniqueID\":\"RG_MAIN$ctl00$ctl06$Detail10\",\"PageSize\":10,\"PageCount\":1,\"EditMode\":\"EditForms\",\"CurrentPageIndex\":0,\"VirtualItemCount\":0,\"AllowMultiColumnSorting\":false,\"AllowNaturalSort\":true,\"AllowFilteringByColumn\":false,\"Name\":\"CONTENT\",\"IsItemInserted\":false,\"clientDataKeyNames\":[],\"_dataBindTemplates\":false,\"_selectedItemStyle\":\"\",\"_selectedItemStyleClass\":\"rgSelectedRow\",\"_columnsData\":[{\"UniqueName\":\"LB_TITLE\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn1\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"RD_RETURN_CAR\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true}]},{\"ClientID\":\"RG_MAIN_ctl00_ctl09_Detail20\",\"UniqueID\":\"RG_MAIN$ctl00$ctl09$Detail20\",\"PageSize\":10,\"PageCount\":1,\"EditMode\":\"EditForms\",\"CurrentPageIndex\":0,\"VirtualItemCount\":0,\"AllowMultiColumnSorting\":false,\"AllowNaturalSort\":true,\"AllowFilteringByColumn\":false,\"Name\":\"CONTENT\",\"IsItemInserted\":false,\"clientDataKeyNames\":[],\"_dataBindTemplates\":false,\"_selectedItemStyle\":\"\",\"_selectedItemStyleClass\":\"rgSelectedRow\",\"_columnsData\":[{\"UniqueName\":\"LB_TITLE\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn1\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"RD_RETURN_CAR\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true}]},{\"ClientID\":\"RG_MAIN_ctl00_ctl12_Detail30\",\"UniqueID\":\"RG_MAIN$ctl00$ctl12$Detail30\",\"PageSize\":10,\"PageCount\":1,\"EditMode\":\"EditForms\",\"CurrentPageIndex\":0,\"VirtualItemCount\":0,\"AllowMultiColumnSorting\":false,\"AllowNaturalSort\":true,\"AllowFilteringByColumn\":false,\"Name\":\"CONTENT\",\"IsItemInserted\":false,\"clientDataKeyNames\":[],\"_dataBindTemplates\":false,\"_selectedItemStyle\":\"\",\"_selectedItemStyleClass\":\"rgSelectedRow\",\"_columnsData\":[{\"UniqueName\":\"LB_TITLE\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn1\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"RD_RETURN_CAR\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true}]},{\"ClientID\":\"RG_MAIN_ctl00_ctl15_Detail40\",\"UniqueID\":\"RG_MAIN$ctl00$ctl15$Detail40\",\"PageSize\":10,\"PageCount\":1,\"EditMode\":\"EditForms\",\"CurrentPageIndex\":0,\"VirtualItemCount\":0,\"AllowMultiColumnSorting\":false,\"AllowNaturalSort\":true,\"AllowFilteringByColumn\":false,\"Name\":\"CONTENT\",\"IsItemInserted\":false,\"clientDataKeyNames\":[],\"_dataBindTemplates\":false,\"_selectedItemStyle\":\"\",\"_selectedItemStyleClass\":\"rgSelectedRow\",\"_columnsData\":[{\"UniqueName\":\"LB_TITLE\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn1\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"RD_RETURN_CAR\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true}]},{\"ClientID\":\"RG_MAIN_ctl00_ctl18_Detail50\",\"UniqueID\":\"RG_MAIN$ctl00$ctl18$Detail50\",\"PageSize\":10,\"PageCount\":1,\"EditMode\":\"EditForms\",\"CurrentPageIndex\":0,\"VirtualItemCount\":0,\"AllowMultiColumnSorting\":false,\"AllowNaturalSort\":true,\"AllowFilteringByColumn\":false,\"Name\":\"CONTENT\",\"IsItemInserted\":false,\"clientDataKeyNames\":[],\"_dataBindTemplates\":false,\"_selectedItemStyle\":\"\",\"_selectedItemStyleClass\":\"rgSelectedRow\",\"_columnsData\":[{\"UniqueName\":\"LB_TITLE\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn1\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"RD_RETURN_CAR\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true}]},{\"ClientID\":\"RG_MAIN_ctl00_ctl21_Detail60\",\"UniqueID\":\"RG_MAIN$ctl00$ctl21$Detail60\",\"PageSize\":10,\"PageCount\":1,\"EditMode\":\"EditForms\",\"CurrentPageIndex\":0,\"VirtualItemCount\":0,\"AllowMultiColumnSorting\":false,\"AllowNaturalSort\":true,\"AllowFilteringByColumn\":false,\"Name\":\"CONTENT\",\"IsItemInserted\":false,\"clientDataKeyNames\":[],\"_dataBindTemplates\":false,\"_selectedItemStyle\":\"\",\"_selectedItemStyleClass\":\"rgSelectedRow\",\"_columnsData\":[{\"UniqueName\":\"LB_TITLE\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn1\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"RD_RETURN_CAR\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true}]},{\"ClientID\":\"RG_MAIN_ctl00_ctl24_Detail70\",\"UniqueID\":\"RG_MAIN$ctl00$ctl24$Detail70\",\"PageSize\":10,\"PageCount\":1,\"EditMode\":\"EditForms\",\"CurrentPageIndex\":0,\"VirtualItemCount\":0,\"AllowMultiColumnSorting\":false,\"AllowNaturalSort\":true,\"AllowFilteringByColumn\":false,\"Name\":\"CONTENT\",\"IsItemInserted\":false,\"clientDataKeyNames\":[],\"_dataBindTemplates\":false,\"_selectedItemStyle\":\"\",\"_selectedItemStyleClass\":\"rgSelectedRow\",\"_columnsData\":[{\"UniqueName\":\"LB_TITLE\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn1\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"RD_RETURN_CAR\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true}]},{\"ClientID\":\"RG_MAIN_ctl00_ctl27_Detail80\",\"UniqueID\":\"RG_MAIN$ctl00$ctl27$Detail80\",\"PageSize\":10,\"PageCount\":1,\"EditMode\":\"EditForms\",\"CurrentPageIndex\":0,\"VirtualItemCount\":0,\"AllowMultiColumnSorting\":false,\"AllowNaturalSort\":true,\"AllowFilteringByColumn\":false,\"Name\":\"CONTENT\",\"IsItemInserted\":false,\"clientDataKeyNames\":[],\"_dataBindTemplates\":false,\"_selectedItemStyle\":\"\",\"_selectedItemStyleClass\":\"rgSelectedRow\",\"_columnsData\":[{\"UniqueName\":\"LB_TITLE\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn1\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"RD_RETURN_CAR\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true}]},{\"ClientID\":\"RG_MAIN_ctl00_ctl30_Detail90\",\"UniqueID\":\"RG_MAIN$ctl00$ctl30$Detail90\",\"PageSize\":10,\"PageCount\":1,\"EditMode\":\"EditForms\",\"CurrentPageIndex\":0,\"VirtualItemCount\":0,\"AllowMultiColumnSorting\":false,\"AllowNaturalSort\":true,\"AllowFilteringByColumn\":false,\"Name\":\"CONTENT\",\"IsItemInserted\":false,\"clientDataKeyNames\":[],\"_dataBindTemplates\":false,\"_selectedItemStyle\":\"\",\"_selectedItemStyleClass\":\"rgSelectedRow\",\"_columnsData\":[{\"UniqueName\":\"LB_TITLE\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn1\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"RD_RETURN_CAR\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true}]},{\"ClientID\":\"RG_MAIN_ctl00_ctl33_Detail100\",\"UniqueID\":\"RG_MAIN$ctl00$ctl33$Detail100\",\"PageSize\":10,\"PageCount\":1,\"EditMode\":\"EditForms\",\"CurrentPageIndex\":0,\"VirtualItemCount\":0,\"AllowMultiColumnSorting\":false,\"AllowNaturalSort\":true,\"AllowFilteringByColumn\":false,\"Name\":\"CONTENT\",\"IsItemInserted\":false,\"clientDataKeyNames\":[],\"_dataBindTemplates\":false,\"_selectedItemStyle\":\"\",\"_selectedItemStyleClass\":\"rgSelectedRow\",\"_columnsData\":[{\"UniqueName\":\"LB_TITLE\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn1\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"RD_RETURN_CAR\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true}]},{\"ClientID\":\"RG_MAIN_ctl00_ctl36_Detail110\",\"UniqueID\":\"RG_MAIN$ctl00$ctl36$Detail110\",\"PageSize\":10,\"PageCount\":1,\"EditMode\":\"EditForms\",\"CurrentPageIndex\":0,\"VirtualItemCount\":0,\"AllowMultiColumnSorting\":false,\"AllowNaturalSort\":true,\"AllowFilteringByColumn\":false,\"Name\":\"CONTENT\",\"IsItemInserted\":false,\"clientDataKeyNames\":[],\"_dataBindTemplates\":false,\"_selectedItemStyle\":\"\",\"_selectedItemStyleClass\":\"rgSelectedRow\",\"_columnsData\":[{\"UniqueName\":\"LB_TITLE\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn1\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"RD_RETURN_CAR\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true}]},{\"ClientID\":\"RG_MAIN_ctl00_ctl48_Detail150\",\"UniqueID\":\"RG_MAIN$ctl00$ctl48$Detail150\",\"PageSize\":10,\"PageCount\":1,\"EditMode\":\"EditForms\",\"CurrentPageIndex\":0,\"VirtualItemCount\":0,\"AllowMultiColumnSorting\":false,\"AllowNaturalSort\":true,\"AllowFilteringByColumn\":false,\"Name\":\"CONTENT\",\"IsItemInserted\":false,\"clientDataKeyNames\":[],\"_dataBindTemplates\":false,\"_selectedItemStyle\":\"\",\"_selectedItemStyleClass\":\"rgSelectedRow\",\"_columnsData\":[{\"UniqueName\":\"LB_TITLE\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"TemplateColumn1\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true},{\"UniqueName\":\"RD_RETURN_CAR\",\"Resizable\":true,\"Reorderable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"Display\":true}]}]","_loadingText":"Loading...","_masterClientID":"RG_MAIN_ctl00","_readyText":"Ready","_shouldFocusOnPage":false,"_statusLabelID":"","allowMultiRowSelection":false,"clientStateFieldID":"RG_MAIN_ClientState"}, null, null, $get("RG_MAIN"));
+});
+//]]>
+</script>
+</form>
+</body>
+</html>

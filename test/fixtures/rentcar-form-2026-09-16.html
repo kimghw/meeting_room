@@ -1,0 +1,733 @@
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>
+	제목 없음
+</title><meta http-equiv="Page-Enter" content="blendTrans(Duration=0.2)"><meta http-equiv="Page-Exit" content="blendTrans(Duration=0.2)"><meta http-equiv="x-ua-compatible" content="IE=9"><link href="StyleSheet.css" rel="stylesheet" type="text/css">
+	<script src="script/jquery-1.11.3.js" type="text/javascript"></script>
+	<script src="script/jquery-ui-1.8.20.js" type="text/javascript"></script>
+
+	 	
+		<link rel="stylesheet" type="text/css" href="css/AutoComplete.css">
+		<script type="text/javascript" src="script/jquery.autoCPL.js"></script>
+		<script type="text/javascript" src="script/jquery.autoCPLDoc.js"></script>
+		<script type="text/javascript">
+			$(function () {
+                $("#txtDriver").AutoComplete({
+                    jsonURL: "/MISC/Common/Json/UserInfo_json.ashx",
+                    jsonParam: { SelectDataFields: "comid, korname, kordeptname", lan: "E", addjob: "1", retired: "0", ord: "k"},
+                    valField: "name",
+                    //옵션파라메터
+                    rtnFields: "korname, userid, kordeptname",
+                    showXMove: 10,
+                    showDataFields: "Employee ID.,Name,Department",
+                    height: "306px",
+                    width: "360px",
+                    //rtnSplitChar : "@",
+                    //useKey: false,
+                    minChar: 2,
+                    //hilight: false,
+                    offCheckBox: "#chkOFF",
+                    callback: function (data) {
+                        var name = data.split("/")[1];
+                        var userid = data.split("/")[2];
+                        var dept = data.split("/")[3];
+
+                       	
+                            $("#txtDriver").val(name);
+						    $("#txtDriverDeptName").val(dept);
+						    $("#txtDriverId").val(userid);
+						    $("#hidDriverID").val(userid);
+						
+                    }
+                }); 
+			});
+
+
+			function fnview(url,mseq){
+				window.open(url, "detail_" + mseq, "toolbar=0, menubar=0, location=0, directories=0, status=0, scrollbars=1, resizable=1, width=850,height=800, top=5, left=50");
+			}
+
+
+			function onlyNumber() {
+				var key = event.keyCode;
+				if (!(key == 8 || key == 9 || key == 13 || key == 46 || key == 144 || (key >= 48 && key <= 57) || key == 110 || key == 190)) {
+					event.returnValue = false;
+				}
+			}
+
+			function f1_2008010404() {
+				a = document.getElementById("txtUseKM").value;
+				b = document.getElementById("txtPreKM").value;
+
+				if (a != "") {
+					for (var i = 0; i < a.length; i++) {
+						a = a.replace(',', '');
+					}
+					for (var j = 0; j < b.length; j++) {
+						b = b.replace(',', '');
+					}
+
+					a = a * 1;
+					b = b * 1;
+
+					result = a - b;
+
+
+					var v = document.getElementById('txtUseKM').value;
+					v = v.replace(/,/g, '');
+					v = v.replace(/ /g, '');
+					var x = v.split('\n');
+					for (var i = 0; i < a.length; i++) {
+						a[i] = commify_2008010404(a[i]);
+					} x = x.join('\n');
+					document.getElementById('txtUseKM').value = a;
+
+					document.getElementById("txtTotKM").value = result;
+
+					var v = document.getElementById('txtTotKM').value;
+					v = v.replace(/,/g, '');
+					v = v.replace(/ /g, '');
+					var a = v.split('\n');
+					for (var i = 0; i < a.length; i++) {
+						a[i] = commify_2008010404(a[i]);
+					} a = a.join('\n');
+					document.getElementById('txtTotKM').value = a;
+				}
+				else {
+					document.getElementById('txtTotKM').value = "";
+				}
+
+
+				var v = document.getElementById('txtUseKM').value;
+				v = v.replace(/,/g, '');
+				v = v.replace(/ /g, '');
+				var a = v.split('\n');
+				for (var i = 0; i < a.length; i++) {
+					a[i] = commify_2008010404(a[i]);
+				} a = a.join('\n');
+				document.getElementById('txtUseKM').value = a;
+
+
+			}
+			function commify_2008010404(n) {
+				var reg = /(^[+-]?\d+)(\d{3})/; n += '';
+				while (reg.test(n)) n = n.replace(reg, '$1' + ',' + '$2');
+				return n;
+			}
+
+			function fnDelete() {
+				if (confirm("정말로 삭제하시겠습니까?")) {
+					return true;
+				}
+
+				return false;
+			}
+
+
+			function f1_2008010405(obj) {
+				var ctlID = obj.id;
+
+				var v = document.getElementById(ctlID).value;
+
+				v = v.replace(/,/g, '');
+				v = v.replace(/ /g, '');
+				var a = v.split('\n');
+				for (var i = 0; i < a.length; i++) {
+					a[i] = commify_2008010404(a[i]);
+				} a = a.join('\n');
+				document.getElementById(ctlID).value = a;
+			}
+        
+			function fnSaveCheck() {
+				var stime = document.getElementById("ddlStimeH").value;
+				var etime = document.getElementById("ddlEtimeH").value;
+
+				if (document.getElementById("txtSdate").value == document.getElementById("txtEdate").value && Number(stime) > Number(etime)) {
+					alert('시작시간이 종료시간보다 클 수 없습니다.');
+					document.getElementById("ddlStimeH").focus();
+
+					return false;
+				}
+
+				if(document.getElementById("txtSdate").value > document.getElementById("txtEdate").value){
+					alert('시작일이 종료일보다 클 수 없습니다.');
+					document.getElementById("txtSdate").focus();
+					return false;
+				}
+
+				if (document.getElementById("txtDriverDeptName").value == "" || document.getElementById("txtDriver").value == "") {
+					alert('사용자는 필수 입력 사항입니다.');
+					document.getElementById("txtDriverDeptName").focus();
+					return false;
+				}
+
+
+				if (document.getElementById("txtPlace").value == "") {
+					alert('행선지는 필수 입력 사항입니다.');
+					document.getElementById("txtPlace").focus();
+					return false;
+				}
+            
+				return true;
+			}
+
+			function openSelectManagerPage() {
+				var winW = 464;
+				var winH = 290;
+				var ypos = (screen.height - winH) / 2;
+				var xpos = (screen.width - winW) / 2;
+				var position = "left=" + xpos + ", top=" + ypos;
+				var size = "width=" + winW + ", height=" + winH;
+				var url = "../../KRCommon/Select_PIC.asp?User_Id=" + 'smhyeon';
+				window.open(url, "openSelectManagerPage", "location=no , menubar=no, resizable=yes, toolbar=no, scrollbars=yes, status=no, " + position + ", " + size);
+				return false;
+			}
+
+
+
+        </script>
+    
+<script language="vbscript" src="../../globals/vs/vb_Function2.vbs"></script>
+<script language="vbscript" src="../../globals/vs/vb_XmlUtils.vbs"></script>
+<script language="VBScript">
+        
+<!--
+Dim bInsert
+'--------------------------------------------------------------------------------------------------
+' 담당자를 선택한다. (PIC : Person In Charge)
+'--------------------------------------------------------------------------------------------------
+Function btnSearch_onClick()
+
+'		document.all.txtRef_User_Id.value	= GetValueSeparator(vReturn, 1, "|")
+'		document.all.txtUser_Id.value		= document.all.txtRef_User_Id.value & "2"
+'		document.all.txtUser_Name.value		= GetValueSeparator(vReturn, 2, "|")
+'		document.all.cmbOrg_Dept_Id.value	= GetValueSeparator(vReturn, 3, "|")
+
+
+	Dim vReturn, allcookies, cookiearray, Name, i, sUser_Id
+	
+	allcookies = document.cookie
+	cookiearray  = split(allcookies,";")
+	
+  
+   
+   
+	vReturn =  Window.ShowModalDialog("../../KRCommon/Select_PIC.asp?User_Id=" + sUser_Id, _
+	"Select_PIC", "DialogWidth:464px;DialogHeight:290px;help:no;status:no;resizable:no;center:yes")
+	'vReturn =  Window.ShowModalDialog("http://eclass.krs.co.kr/intra/intranet/KRCommon/Select_PIC.asp?User_Id=" + sUser_Id, _
+    	
+	If vReturn <> "" Then
+		Set oDOM	=	RfGetXMLDoc(vReturn)
+
+		Set oPage	=	oDOM.selectSingleNode("//REQUEST")
+
+		If (oPage.getAttribute("ROWCOUNT") = "1") Then
+			Set oNode	=	oDOM.selectSingleNode("//NODE")
+			    document.all.hidDriverID.value=	oNode.getAttribute("User_Id")
+			    document.all.txtDriver.value=	oNode.getAttribute("User_Name")
+			    document.all.txtDriverDeptName.value=	oNode.getAttribute("Dept_Name")
+		ElseIf (oPage.getAttribute("ROWCOUNT") = "0") Then
+			document.all.hidFinder.value	=	""
+			document.all.txtFinder.value		=	""
+			document.all.txtFinderDept.value		=	""
+		End If
+    		
+		Set oNode	=	Nothing
+		Set oPage	=	Nothing
+		Set oDOM	=	Nothing
+	End If
+End Function
+-->
+</script>
+
+<link href="/intra/intranet/VSDotNet/RentCar/WebResource.axd?d=jUgFy6CIzOZCCzBcq1qLJXDAEvRERrwnkIHmIBf0nOV5LCHbqCCNxsUZfpSKwK1G6rMDhzvN_BIcwVQXOv-slYJ9F6_poUQElEYmNaorcX3n6JD5koDwm6o-JsxwTYbiYn_WgA2&amp;t=636038063655584257" type="text/css" rel="stylesheet" class="Telerik_stylesheet"><link href="/intra/intranet/VSDotNet/RentCar/WebResource.axd?d=CfOM0U24cP8EZDEo9h99OU2NOtevlReGmXLXvUggPHdm7iqEsBdNljXljB3CBe-V5TaPop7oEG45LWuB4H02LhJyRWcvTxH-JkEcXe3S2HN73Ojm449_9Z9CzodfPxO8hN55upByZ7JiPZPgegoBgamPERyl2-aEmUfbCk0cTK5olBu40&amp;t=636038063655584257" type="text/css" rel="stylesheet" class="Telerik_stylesheet"><link href="/intra/intranet/VSDotNet/RentCar/WebResource.axd?d=B3OPdN9LKm1oyqgO0uIHSg73-gabMn7kTcyFiOHAH80EL82Cudi62jxjJ1LHuFSCwm1T2qZgvP6ZbHPh212TC5N6Pv-stMr6-xt8z3Xbt52fV4prtrv3ZNn-5zJ2DAXlL5vKQOinJ04XiukRElnTw0o-hcY1&amp;t=636038063655584257" type="text/css" rel="stylesheet" class="Telerik_stylesheet"><link href="/intra/intranet/VSDotNet/RentCar/WebResource.axd?d=DVq-YytrAsm-pPTQ8PAFqF5Da-RRCgFVsxo3pOYcLj3lct76tGquZ1WJ0WX3S6Bfq-SUWdOzgSw9fP1v0K7_exz6jOtb5XGulOXf-LNzbpexjwoX55ZGtQ2xFsJOb3BJlBl0qMEO8zVGJ0InLXZsAyy3s1nXKyK_EXY81VL10koUdJQz0&amp;t=636038063655584257" type="text/css" rel="stylesheet" class="Telerik_stylesheet"></head>
+<body>
+    <form name="form1" method="post" action="Admin_View_New.aspx?CARIDX=73&amp;SDATE=2026-09-16" id="form1">
+<div>
+<input type="hidden" name="RadScriptManager1_TSM" id="RadScriptManager1_TSM" value=";;System.Web.Extensions, Version=3.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35:ko-KR:9da113d1-62cb-41a4-9573-c03cf93e060f:ea597d4b:b25378d2;Telerik.Web.UI:ko-KR:15a8cff0-9e51-4282-a100-c2dcd204ecf2:16e4e7cd:ed16cbdc:f7645509:8674cba1:b7778d6c:c08e9f8a:59462f1:a51ee93e">
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="">
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="">
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="cmVkYWN0ZWQgZm9yIHB1YmxpYyByZXBv">
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['form1'];
+if (!theForm) {
+    theForm = document.form1;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/intra/intranet/VSDotNet/RentCar/WebResource.axd?d=ju5uyOObVYkZu_UUbAM6EFZ0dBOfVSIhgswFHhnT-RA-VADobsdmtZf0g4ds6LzMvoXKBh4XCDsYQNRy5rhjlShQe101&amp;t=638803284698914358" type="text/javascript"></script>
+
+
+<script src="/intra/intranet/VSDotNet/RentCar/Telerik.Web.UI.WebResource.axd?_TSM_HiddenField_=RadScriptManager1_TSM&amp;compress=1&amp;_TSM_CombinedScripts_=%3b%3bSystem.Web.Extensions%2c+Version%3d3.5.0.0%2c+Culture%3dneutral%2c+PublicKeyToken%3d31bf3856ad364e35%3ako-KR%3a9da113d1-62cb-41a4-9573-c03cf93e060f%3aea597d4b%3ab25378d2%3bTelerik.Web.UI%3ako-KR%3a15a8cff0-9e51-4282-a100-c2dcd204ecf2%3a16e4e7cd%3aed16cbdc%3af7645509%3a8674cba1%3ab7778d6c%3ac08e9f8a%3a59462f1%3aa51ee93e" type="text/javascript"></script>
+<script type="text/javascript">
+//<![CDATA[
+if (typeof(Sys) === 'undefined') throw new Error('ASP.NET Ajax 클라이언트측 프레임워크를 로드하지 못했습니다.');
+//]]>
+</script>
+
+<div>
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="2917D159">
+</div>
+    <input type="hidden" name="hidIDX" id="hidIDX">
+    <input type="hidden" name="hidCarIDX" id="hidCarIDX" value="73">
+    <input type="hidden" name="hidDate" id="hidDate" value="2026-09-16">
+	<script type="text/javascript">
+//<![CDATA[
+Sys.WebForms.PageRequestManager._initialize('RadScriptManager1', document.getElementById('form1'));
+Sys.WebForms.PageRequestManager.getInstance()._updateControls(['tRadAjaxManager1SU'], [], [], 90);
+//]]>
+</script>
+
+	<script type="text/javascript">
+		//Put your JavaScript code here.
+    </script>
+	<!-- 2010.2.929.35 --><div id="RadAjaxManager1SU" style="display: none;">
+	<span id="RadAjaxManager1" style="display:none;"></span>
+</div>
+ 
+	
+   
+    <div>
+       <table width="800" border="0" cellpadding="0" cellspacing="0">
+	        <tbody><tr>
+		        <td>
+			        <table width="100%" border="0" cellpadding="0" cellspacing="0">
+				        <tbody><tr>
+					        <td valign="middle" width="20"><img src="./images/GroupBox3/Title_Icon.gif" border="0"></td>
+					        <td class="subtitle2">업무용 차량 예약</td>
+					        <td align="right"></td>
+				        </tr>
+	                    <tr>
+		                    <td height="5" colspan="2"></td>
+	                    </tr>
+	                    <tr>
+		                    <td style="background-image:url(./images/line_back.gif)" colspan="3" height="3"></td>
+	                    </tr>  
+			        </tbody></table>
+		        </td>
+	        </tr>
+	       <tr>
+		        <td>
+	                <table><tbody><tr><td height="15">&nbsp;</td></tr></tbody></table>
+			        <table width="100%" cellpadding="0" cellspacing="0" border="0" align="center">
+				        <tbody><tr>
+					        <td width="7"><img src="./images/Top_Left.gif" border="0"></td>
+					        <td width="786" background="./images/Top_Center.gif">
+						        <table cellpadding="0" cellspacing="0" border="0">
+							        <tbody><tr>
+								        <td width="20" background="./images/Top_Center.gif"></td>
+								        <td width="7"><img src="./images/Title_Left.gif" border="0"></td>
+								        <td background="./images/Title_Center.gif" class="Group_Title">사용기간</td>
+								        <td width="7"><img src="./images/Title_Right.gif" border="0"></td>
+							        </tr>
+						        </tbody></table>
+					        </td>
+					        <td width="7"><img src="./images/Top_Right.gif" border="0"></td>
+				        </tr>
+				        <tr>
+					        <td background="./images/Center_Left.gif"></td>
+					        <td>
+						        <table width="100%" border="0" cellpadding="0" cellspacing="2">
+							        <tbody><tr>
+								        <td height="3" colspan="4"></td>
+							        </tr>
+							        <tr>
+								        <td width="15%" class="lbl_l"><img src="./images/Dot_1.gif" class="Dot_Img">대여시작일</td>
+								        <td width="37%">
+								            <span id="lblIMO_NO">
+                                                <div id="txtSdate_wrapper" class="RadPicker RadPicker_Office2007" style="display:inline-block;width:150px;">
+	<input style="visibility:hidden;display:block;float:right;margin:0 0 -1px -1px;width:1px;height:1px;overflow:hidden;border:0;padding:0;" id="txtSdate" name="txtSdate" type="text" class="rdfd_" value="2026-09-16"><table cellspacing="0" class="rcTable" style="width:100%;">
+		<tbody><tr>
+			<td class="rcInputCell" style="width:100%;"><span id="txtSdate_dateInput_wrapper" class="RadInput RadInput_Office2007" style="display:block;white-space:normal;"><input type="text" value="2026-09-16" id="txtSdate_dateInput_text" name="txtSdate_dateInput_text" class="riTextBox riEnabled" style="width:100%;"><input style="visibility:hidden;float:right;margin:-18px 0 0 -1px;width:1px;height:1px;overflow:hidden;border:0;padding:0;" id="txtSdate_dateInput" name="txtSdate$dateInput" type="text" class="rdfd_" value="2026-09-16-00-00-00"><input id="txtSdate_dateInput_ClientState" name="txtSdate_dateInput_ClientState" type="hidden" autocomplete="off"></span></td><td><a title="Open the calendar popup." href="#" id="txtSdate_popupButton" class="rcCalPopup">Open the calendar popup.</a><div id="txtSdate_calendar_wrapper" style="display: none"><table id="txtSdate_calendar" summary="Calendar" cellspacing="0" class="RadCalendar RadCalendar_Office2007" border="0">
+				<thead>
+					<tr>
+						<td class="rcTitlebar"><table cellspacing="0" summary="title and navigation" border="0">
+							<tbody><tr>
+								<td><a id="txtSdate_calendar_FNP" class="rcFastPrev" title="&lt;&lt;" href="#">&lt;&lt;</a></td><td><a id="txtSdate_calendar_NP" class="rcPrev" title="&lt;" href="#">&lt;</a></td><td id="txtSdate_calendar_Title" class="rcTitle">9월 2026</td><td><a id="txtSdate_calendar_NN" class="rcNext" title="&gt;" href="#">&gt;</a></td><td><a id="txtSdate_calendar_FNN" class="rcFastNext" title="&gt;&gt;" href="#">&gt;&gt;</a></td>
+							</tr>
+						</tbody></table></td>
+					</tr>
+				</thead><tbody>
+	<tr>
+		<td class="rcMain"><table id="txtSdate_calendar_Top" class="rcMainTable" cellspacing="0" summary="9월 2026" border="0">
+	<thead>
+		<tr class="rcWeek">
+			<th class="rcViewSel">&nbsp;</th><th id="txtSdate_calendar_Top_cs_1" title="일요일" abbr="일" scope="col">일</th><th id="txtSdate_calendar_Top_cs_2" title="월요일" abbr="월" scope="col">월</th><th id="txtSdate_calendar_Top_cs_3" title="화요일" abbr="화" scope="col">화</th><th id="txtSdate_calendar_Top_cs_4" title="수요일" abbr="수" scope="col">수</th><th id="txtSdate_calendar_Top_cs_5" title="목요일" abbr="목" scope="col">목</th><th id="txtSdate_calendar_Top_cs_6" title="금요일" abbr="금" scope="col">금</th><th id="txtSdate_calendar_Top_cs_7" title="토요일" abbr="토" scope="col">토</th>
+		</tr>
+	</thead><tbody>
+		<tr class="rcRow">
+			<th id="txtSdate_calendar_Top_rs_1" scope="row">36</th><td class="rcOtherMonth" title="일요일, 8월 30, 2026"><a href="#">30</a></td><td class="rcOtherMonth" title="월요일, 8월 31, 2026"><a href="#">31</a></td><td title="화요일, 9월 01, 2026"><a href="#">1</a></td><td title="수요일, 9월 02, 2026"><a href="#">2</a></td><td title="목요일, 9월 03, 2026"><a href="#">3</a></td><td title="금요일, 9월 04, 2026"><a href="#">4</a></td><td class="rcWeekend" title="토요일, 9월 05, 2026"><a href="#">5</a></td>
+		</tr><tr class="rcRow">
+			<th id="txtSdate_calendar_Top_rs_2" scope="row">37</th><td class="rcWeekend" title="일요일, 9월 06, 2026"><a href="#">6</a></td><td title="월요일, 9월 07, 2026"><a href="#">7</a></td><td title="화요일, 9월 08, 2026"><a href="#">8</a></td><td title="수요일, 9월 09, 2026"><a href="#">9</a></td><td title="목요일, 9월 10, 2026"><a href="#">10</a></td><td title="금요일, 9월 11, 2026"><a href="#">11</a></td><td class="rcWeekend" title="토요일, 9월 12, 2026"><a href="#">12</a></td>
+		</tr><tr class="rcRow">
+			<th id="txtSdate_calendar_Top_rs_3" scope="row">38</th><td class="rcWeekend" title="일요일, 9월 13, 2026"><a href="#">13</a></td><td title="월요일, 9월 14, 2026"><a href="#">14</a></td><td title="화요일, 9월 15, 2026"><a href="#">15</a></td><td title="수요일, 9월 16, 2026"><a href="#">16</a></td><td title="목요일, 9월 17, 2026"><a href="#">17</a></td><td title="금요일, 9월 18, 2026"><a href="#">18</a></td><td class="rcWeekend" title="토요일, 9월 19, 2026"><a href="#">19</a></td>
+		</tr><tr class="rcRow">
+			<th id="txtSdate_calendar_Top_rs_4" scope="row">39</th><td class="rcWeekend" title="일요일, 9월 20, 2026"><a href="#">20</a></td><td title="월요일, 9월 21, 2026"><a href="#">21</a></td><td title="화요일, 9월 22, 2026"><a href="#">22</a></td><td title="수요일, 9월 23, 2026"><a href="#">23</a></td><td title="목요일, 9월 24, 2026"><a href="#">24</a></td><td title="금요일, 9월 25, 2026"><a href="#">25</a></td><td class="rcWeekend" title="토요일, 9월 26, 2026"><a href="#">26</a></td>
+		</tr><tr class="rcRow">
+			<th id="txtSdate_calendar_Top_rs_5" scope="row">40</th><td class="rcWeekend" title="일요일, 9월 27, 2026"><a href="#">27</a></td><td title="월요일, 9월 28, 2026"><a href="#">28</a></td><td title="화요일, 9월 29, 2026"><a href="#">29</a></td><td title="수요일, 9월 30, 2026"><a href="#">30</a></td><td class="rcOtherMonth" title="목요일, 10월 01, 2026"><a href="#">1</a></td><td class="rcOtherMonth" title="금요일, 10월 02, 2026"><a href="#">2</a></td><td class="rcOtherMonth" title="토요일, 10월 03, 2026"><a href="#">3</a></td>
+		</tr><tr class="rcRow">
+			<th id="txtSdate_calendar_Top_rs_6" scope="row">41</th><td class="rcOtherMonth" title="일요일, 10월 04, 2026"><a href="#">4</a></td><td class="rcOtherMonth" title="월요일, 10월 05, 2026"><a href="#">5</a></td><td class="rcOtherMonth" title="화요일, 10월 06, 2026"><a href="#">6</a></td><td class="rcOtherMonth" title="수요일, 10월 07, 2026"><a href="#">7</a></td><td class="rcOtherMonth" title="목요일, 10월 08, 2026"><a href="#">8</a></td><td class="rcOtherMonth" title="금요일, 10월 09, 2026"><a href="#">9</a></td><td class="rcOtherMonth" title="토요일, 10월 10, 2026"><a href="#">10</a></td>
+		</tr>
+	</tbody>
+</table></td>
+	</tr>
+</tbody>
+			</table><input type="hidden" name="txtSdate_calendar_SD" id="txtSdate_calendar_SD" value="[]"><input type="hidden" name="txtSdate_calendar_AD" id="txtSdate_calendar_AD" value="[[1980,1,1],[2099,12,30],[2026,9,16]]"></div></td>
+		</tr>
+	</tbody></table><input id="txtSdate_ClientState" name="txtSdate_ClientState" type="hidden" autocomplete="off">
+</div>
+								                
+								            </span>
+								        </td>
+								        <td width="13%" class="lbl_l"><img src="./images/Dot_1.gif" class="Dot_Img">대여시작시</td>
+								        <td width="35%">
+								            <span id="lblIMO_NO"></span>
+                                             <select name="ddlStimeH" id="ddlStimeH">
+	<option value="0">오전12시</option>
+	<option value="1">오전01시</option>
+	<option value="2">오전02시</option>
+	<option value="3">오전03시</option>
+	<option value="4">오전04시</option>
+	<option value="5">오전05시</option>
+	<option value="6">오전06시</option>
+	<option value="7">오전07시</option>
+	<option value="8">오전08시</option>
+	<option selected="selected" value="9">오전09시</option>
+	<option value="10">오전10시</option>
+	<option value="11">오전11시</option>
+	<option value="12">오후12시</option>
+	<option value="13">오후01시</option>
+	<option value="14">오후02시</option>
+	<option value="15">오후03시</option>
+	<option value="16">오후04시</option>
+	<option value="17">오후05시</option>
+	<option value="18">오후06시</option>
+	<option value="19">오후07시</option>
+	<option value="20">오후08시</option>
+	<option value="21">오후09시</option>
+	<option value="22">오후10시</option>
+	<option value="23">오후11시</option>
+
+</select>
+                                            <select name="ddlStimeM" id="ddlStimeM">
+	<option value="0">00분</option>
+	<option value="10">10분</option>
+	<option value="20">20분</option>
+	<option value="30">30분</option>
+	<option value="40">40분</option>
+	<option value="50">50분</option>
+
+</select>           
+                                        </td>
+							        </tr>	
+							        <tr>
+								        <td width="15%" class="lbl_l"><img src="./images/Dot_1.gif" class="Dot_Img">대여종료일</td>
+								        <td width="37%">
+								            <span id="Span11">
+                                                <div id="txtEdate_wrapper" class="RadPicker RadPicker_Office2007" style="display:inline-block;width:150px;">
+	<input style="visibility:hidden;display:block;float:right;margin:0 0 -1px -1px;width:1px;height:1px;overflow:hidden;border:0;padding:0;" id="txtEdate" name="txtEdate" type="text" class="rdfd_" value="2026-09-16"><table cellspacing="0" class="rcTable" style="width:100%;">
+		<tbody><tr>
+			<td class="rcInputCell" style="width:100%;"><span id="txtEdate_dateInput_wrapper" class="RadInput RadInput_Office2007" style="display:block;white-space:normal;"><input type="text" value="2026-09-16" id="txtEdate_dateInput_text" name="txtEdate_dateInput_text" class="riTextBox riEnabled" style="width:100%;"><input style="visibility:hidden;float:right;margin:-18px 0 0 -1px;width:1px;height:1px;overflow:hidden;border:0;padding:0;" id="txtEdate_dateInput" name="txtEdate$dateInput" type="text" class="rdfd_" value="2026-09-16-00-00-00"><input id="txtEdate_dateInput_ClientState" name="txtEdate_dateInput_ClientState" type="hidden" autocomplete="off"></span></td><td><a title="Open the calendar popup." href="#" id="txtEdate_popupButton" class="rcCalPopup">Open the calendar popup.</a><div id="txtEdate_calendar_wrapper" style="display: none"><table id="txtEdate_calendar" summary="Calendar" cellspacing="0" class="RadCalendar RadCalendar_Office2007" border="0">
+				<thead>
+					<tr>
+						<td class="rcTitlebar"><table cellspacing="0" summary="title and navigation" border="0">
+							<tbody><tr>
+								<td><a id="txtEdate_calendar_FNP" class="rcFastPrev" title="&lt;&lt;" href="#">&lt;&lt;</a></td><td><a id="txtEdate_calendar_NP" class="rcPrev" title="&lt;" href="#">&lt;</a></td><td id="txtEdate_calendar_Title" class="rcTitle">9월 2026</td><td><a id="txtEdate_calendar_NN" class="rcNext" title="&gt;" href="#">&gt;</a></td><td><a id="txtEdate_calendar_FNN" class="rcFastNext" title="&gt;&gt;" href="#">&gt;&gt;</a></td>
+							</tr>
+						</tbody></table></td>
+					</tr>
+				</thead><tbody>
+	<tr>
+		<td class="rcMain"><table id="txtEdate_calendar_Top" class="rcMainTable" cellspacing="0" summary="9월 2026" border="0">
+	<thead>
+		<tr class="rcWeek">
+			<th class="rcViewSel">&nbsp;</th><th id="txtEdate_calendar_Top_cs_1" title="일요일" abbr="일" scope="col">일</th><th id="txtEdate_calendar_Top_cs_2" title="월요일" abbr="월" scope="col">월</th><th id="txtEdate_calendar_Top_cs_3" title="화요일" abbr="화" scope="col">화</th><th id="txtEdate_calendar_Top_cs_4" title="수요일" abbr="수" scope="col">수</th><th id="txtEdate_calendar_Top_cs_5" title="목요일" abbr="목" scope="col">목</th><th id="txtEdate_calendar_Top_cs_6" title="금요일" abbr="금" scope="col">금</th><th id="txtEdate_calendar_Top_cs_7" title="토요일" abbr="토" scope="col">토</th>
+		</tr>
+	</thead><tbody>
+		<tr class="rcRow">
+			<th id="txtEdate_calendar_Top_rs_1" scope="row">36</th><td class="rcOtherMonth" title="일요일, 8월 30, 2026"><a href="#">30</a></td><td class="rcOtherMonth" title="월요일, 8월 31, 2026"><a href="#">31</a></td><td title="화요일, 9월 01, 2026"><a href="#">1</a></td><td title="수요일, 9월 02, 2026"><a href="#">2</a></td><td title="목요일, 9월 03, 2026"><a href="#">3</a></td><td title="금요일, 9월 04, 2026"><a href="#">4</a></td><td class="rcWeekend" title="토요일, 9월 05, 2026"><a href="#">5</a></td>
+		</tr><tr class="rcRow">
+			<th id="txtEdate_calendar_Top_rs_2" scope="row">37</th><td class="rcWeekend" title="일요일, 9월 06, 2026"><a href="#">6</a></td><td title="월요일, 9월 07, 2026"><a href="#">7</a></td><td title="화요일, 9월 08, 2026"><a href="#">8</a></td><td title="수요일, 9월 09, 2026"><a href="#">9</a></td><td title="목요일, 9월 10, 2026"><a href="#">10</a></td><td title="금요일, 9월 11, 2026"><a href="#">11</a></td><td class="rcWeekend" title="토요일, 9월 12, 2026"><a href="#">12</a></td>
+		</tr><tr class="rcRow">
+			<th id="txtEdate_calendar_Top_rs_3" scope="row">38</th><td class="rcWeekend" title="일요일, 9월 13, 2026"><a href="#">13</a></td><td title="월요일, 9월 14, 2026"><a href="#">14</a></td><td title="화요일, 9월 15, 2026"><a href="#">15</a></td><td title="수요일, 9월 16, 2026"><a href="#">16</a></td><td title="목요일, 9월 17, 2026"><a href="#">17</a></td><td title="금요일, 9월 18, 2026"><a href="#">18</a></td><td class="rcWeekend" title="토요일, 9월 19, 2026"><a href="#">19</a></td>
+		</tr><tr class="rcRow">
+			<th id="txtEdate_calendar_Top_rs_4" scope="row">39</th><td class="rcWeekend" title="일요일, 9월 20, 2026"><a href="#">20</a></td><td title="월요일, 9월 21, 2026"><a href="#">21</a></td><td title="화요일, 9월 22, 2026"><a href="#">22</a></td><td title="수요일, 9월 23, 2026"><a href="#">23</a></td><td title="목요일, 9월 24, 2026"><a href="#">24</a></td><td title="금요일, 9월 25, 2026"><a href="#">25</a></td><td class="rcWeekend" title="토요일, 9월 26, 2026"><a href="#">26</a></td>
+		</tr><tr class="rcRow">
+			<th id="txtEdate_calendar_Top_rs_5" scope="row">40</th><td class="rcWeekend" title="일요일, 9월 27, 2026"><a href="#">27</a></td><td title="월요일, 9월 28, 2026"><a href="#">28</a></td><td title="화요일, 9월 29, 2026"><a href="#">29</a></td><td title="수요일, 9월 30, 2026"><a href="#">30</a></td><td class="rcOtherMonth" title="목요일, 10월 01, 2026"><a href="#">1</a></td><td class="rcOtherMonth" title="금요일, 10월 02, 2026"><a href="#">2</a></td><td class="rcOtherMonth" title="토요일, 10월 03, 2026"><a href="#">3</a></td>
+		</tr><tr class="rcRow">
+			<th id="txtEdate_calendar_Top_rs_6" scope="row">41</th><td class="rcOtherMonth" title="일요일, 10월 04, 2026"><a href="#">4</a></td><td class="rcOtherMonth" title="월요일, 10월 05, 2026"><a href="#">5</a></td><td class="rcOtherMonth" title="화요일, 10월 06, 2026"><a href="#">6</a></td><td class="rcOtherMonth" title="수요일, 10월 07, 2026"><a href="#">7</a></td><td class="rcOtherMonth" title="목요일, 10월 08, 2026"><a href="#">8</a></td><td class="rcOtherMonth" title="금요일, 10월 09, 2026"><a href="#">9</a></td><td class="rcOtherMonth" title="토요일, 10월 10, 2026"><a href="#">10</a></td>
+		</tr>
+	</tbody>
+</table></td>
+	</tr>
+</tbody>
+			</table><input type="hidden" name="txtEdate_calendar_SD" id="txtEdate_calendar_SD" value="[]"><input type="hidden" name="txtEdate_calendar_AD" id="txtEdate_calendar_AD" value="[[1980,1,1],[2099,12,30],[2026,9,16]]"></div></td>
+		</tr>
+	</tbody></table><input id="txtEdate_ClientState" name="txtEdate_ClientState" type="hidden" autocomplete="off">
+</div>
+								                
+								            </span>
+								        </td>
+								        <td width="13%" class="lbl_l"><img src="./images/Dot_1.gif" class="Dot_Img">대여종료시</td>
+								        <td width="35%">
+								            <span id="Span12"><span id="Label2" class="Title"></span></span>
+                                            
+                                             <select name="ddlEtimeH" id="ddlEtimeH">
+	<option value="0">오전12시</option>
+	<option value="1">오전01시</option>
+	<option value="2">오전02시</option>
+	<option value="3">오전03시</option>
+	<option value="4">오전04시</option>
+	<option value="5">오전05시</option>
+	<option value="6">오전06시</option>
+	<option value="7">오전07시</option>
+	<option value="8">오전08시</option>
+	<option value="9">오전09시</option>
+	<option value="10">오전10시</option>
+	<option value="11">오전11시</option>
+	<option value="12">오후12시</option>
+	<option value="13">오후01시</option>
+	<option value="14">오후02시</option>
+	<option value="15">오후03시</option>
+	<option value="16">오후04시</option>
+	<option value="17">오후05시</option>
+	<option selected="selected" value="18">오후06시</option>
+	<option value="19">오후07시</option>
+	<option value="20">오후08시</option>
+	<option value="21">오후09시</option>
+	<option value="22">오후10시</option>
+	<option value="23">오후11시</option>
+
+</select>
+                                            <select name="ddlEtimeM" id="ddlEtimeM">
+	<option value="0">00분</option>
+	<option value="10">10분</option>
+	<option value="20">20분</option>
+	<option value="30">30분</option>
+	<option value="40">40분</option>
+	<option value="50">50분</option>
+
+</select>           
+                                        </td>
+							        </tr>											
+						        </tbody></table>
+					        </td>
+					        <td background="./images/Center_Right.gif"></td>
+				        </tr>
+				        <tr height="7">
+					        <td><img src="./images/Bottom_Left.gif" border="0"></td>
+					        <td background="./images/Bottom_Center.gif"></td>
+					        <td><img src="./images/Bottom_Right.gif" border="0"></td>
+				        </tr>
+			        </tbody></table>
+		        </td>
+	        </tr>
+	        <tr>
+		        <td height="10"></td>
+	        </tr>
+	        <tr>
+		        <td>
+			        <table width="100%" cellpadding="0" cellspacing="0" border="0" align="center">
+				        <tbody><tr>
+					        <td width="7"><img src="./images/Top_Left.gif" border="0"></td>
+					        <td width="786" background="./images/Top_Center.gif">
+						        <table cellpadding="0" cellspacing="0" border="0">
+							        <tbody><tr>
+								        <td width="20" background="./images/Top_Center.gif"></td>
+								        <td width="7"><img src="./images/Title_Left.gif" border="0"></td>
+								        <td background="./images/Title_Center.gif" class="Group_Title">상세정보</td>
+								        <td width="7"><img src="./images/Title_Right.gif" border="0"></td>
+							        </tr>
+						        </tbody></table>
+					        </td>
+					        <td width="7"><img src="./images/Top_Right.gif" border="0"></td>
+				        </tr>
+				        <tr>
+					        <td background="./images/Center_Left.gif"></td>
+					        <td>
+						        <table width="100%" border="0" cellpadding="0" cellspacing="2">
+							        <tbody><tr>
+								        <td height="3" colspan="4"></td>
+							        </tr>		
+							        <tr>
+								        <td width="15%" class="lbl_l" style="display: none"><img src="./images/Dot_1.gif" class="Dot_Img">지역</td>
+								        <td class="ShipName" width="37%" style="display: none">
+								            <span id="Span8">    
+                                                <select name="DDL_REGION" id="DDL_REGION">
+	<option selected="selected" value="부산">부산</option>
+
+</select>
+								            </span>
+								        </td>
+								        <td width="15%" class="lbl_l"><img src="./images/Dot_1.gif" class="Dot_Img">업무용 차량</td>
+								        <td class="ShipName">
+								            <span id="Span7">
+								                <div align="left"><select name="DDL_CARNAME" id="DDL_CARNAME">
+	<option selected="selected" value="73">아반테CN74</option>
+
+</select></div>
+								            </span>
+                                        </td>
+							        </tr>	
+							        <tr>
+								        <td class="sl" colspan="4"></td>
+							        </tr>																				
+							        <tr>
+								        <td width="15%" class="lbl_l"><img src="./images/Dot_1.gif" class="Dot_Img">사용자</td>
+								        <td class="ShipName" colspan="3">
+								            <span id="Span3">
+								                
+												<div align="left">
+													<input name="txtDriver" type="text" value="고민수" id="txtDriver" class="SingleLine_Edit" onkeydown="return (event.keyCode!=13);" placeholder="사용자명" autocomplete="off">&nbsp;<input name="txtDriverDeptName" type="text" value="연구3팀" id="txtDriverDeptName" class="SingleLine_Edit" readonly="ReadOnly" style="background-color: lightgray;">&nbsp;<input name="txtDriverId" type="text" value="testuser" id="txtDriverId" class="SingleLine_Edit" readonly="ReadOnly" style="background-color: lightgray;">
+													<input type="hidden" name="hidDriverID" id="hidDriverID" value="testuser">
+												</div>
+								            </span>
+								        </td>
+							        </tr>		
+							        <tr>
+								        <td class="sl" colspan="4"></td>
+							        </tr>																			
+							        <tr style="display: none">
+								        <td width="15%" class="lbl_l"><img src="./images/Dot_1.gif" class="Dot_Img">동승자</td>
+								        <td class="ShipName" colspan="3">
+								            <span id="Span4">
+								                <div align="left"><input name="txtPassenger" type="text" id="txtPassenger" class="SingleLine_Edit" style="width:300px;"></div>
+								            </span>
+								        </td>
+							        </tr>		
+							        <tr>
+								        <td width="15%" class="lbl_l"><img src="./images/Dot_1.gif" class="Dot_Img">행선지</td>
+								        <td class="ShipName" colspan="3">
+								            <span id="Span6">
+								                <input name="txtPlace" type="text" id="txtPlace" class="SingleLine_Edit" style="width:285px;text-align:left">
+								            </span></td>
+							          
+                                    </tr>
+                                    <tr>
+                                        <td width="15%" class="lbl_l"><img src="./images/Dot_1.gif" class="Dot_Img">사용목적</td>
+								        <td class="ShipName" colspan="3">
+								            <span id="Span5">
+								                <input name="txtTitle" type="text" id="txtTitle" class="SingleLine_Edit" style="width:285px;text-align:left">
+								            </span>
+								        </td>
+                                    </tr>
+							        <tr style="display: none">
+								        <td width="15%;" class="lbl_l"><img src="./images/Dot_1.gif" class="Dot_Img">주행거리</td>
+								        <td class="ShipName" width="37%">
+								            <span id="Span14"><input name="txtUseKM" type="text" value="0" id="txtUseKM" class="SingleLine_Edit" onkeyup="f1_2008010404();" onkeypress="onlyNumber();" style="ime-mode:disabled; text-align:right">km</span></td>
+								        <td width="13%" class="lbl_l"><img src="./images/Dot_1.gif" class="Dot_Img">누적 (km)</td>
+							        </tr>
+									<tr style="display: none">
+										<td width="15%" class="lbl_l"><img src="./images/Dot_1.gif" class="Dot_Img">주행전 거리 (km)</td>
+											<td class="ShipName" width="35%">
+								            <span id="Span15">
+								                <input name="txtPreKM" type="text" value="18350" id="txtPreKM" class="SingleLine_Edit" onkeyup="f1_2008010404();" onkeypress="onlyNumber();" style="ime-mode:disabled; text-align:right">km
+								            </span>
+								        </td>
+									</tr>
+							        <tr style="display:none">
+								        <td class="sl" colspan="4"></td>
+							        </tr>	
+							        <tr style="display:none">
+								        <td width="15%" class="lbl_l"><img src="./images/Dot_1.gif" class="Dot_Img">총주행거리</td>
+								        <td class="ShipName">
+								            <span id="Span10">
+								                <div align="left"><input name="txtTotKM" type="text" id="txtTotKM" class="SingleLine_Edit" readonly="ReadOnly" style="ime-mode:disabled; text-align:right">km</div>
+								            </span>
+								        </td>
+								        <td width="13%" class="lbl_l"><img src="./images/Dot_1.gif" class="Dot_Img">예상주행거리</td>
+								        <td class="ShipName" width="35%">
+								            <span id="Span13"><input name="TextBox1" type="text" id="TextBox1" class="SingleLine_Edit" onkeyup="f1_2008010404();" onkeypress="onlyNumber();" style="ime-mode:disabled; text-align:right">km</span></td>
+							        </tr>				
+							        <tr>
+								        <td class="sl" colspan="4"></td>
+							        </tr>	
+							        <tr style="display:none">
+								        <td width="15%" class="lbl_l"><img src="./images/Dot_1.gif" class="Dot_Img">유류비</td>
+								        <td class="ShipName" width="37%">
+								            <span id="Span1">
+								                <input name="txtOilPrice" type="text" value="0" id="txtOilPrice" class="SingleLine_Edit" onkeypress="onlyNumber();" onkeyup="f1_2008010405(this)" style="ime-mode:disabled; text-align:right">원
+								            </span>
+								        </td>
+								        <td width="13%" class="lbl_l"><img src="./images/Dot_1.gif" class="Dot_Img">하이패스충전</td>
+								        <td class="ShipName" width="35%">
+								            <span id="Span2"><input name="txtHipassPrice" type="text" value="0" id="txtHipassPrice" class="SingleLine_Edit" onkeypress="onlyNumber();" onkeyup="f1_2008010405(this)" style="ime-mode:disabled; text-align:right">원</span></td>
+							        </tr>																	
+						        </tbody></table>
+					        </td>
+					        <td background="./images/Center_Right.gif"></td>
+				        </tr>
+				        <tr height="7">
+					        <td><img src="./images/Bottom_Left.gif" border="0"></td>
+					        <td background="./images/Bottom_Center.gif"></td>
+					        <td><img src="./images/Bottom_Right.gif" border="0"></td>
+				        </tr>
+			        </tbody></table>
+		        </td>
+	        </tr>
+	        <tr>
+	            <td height="15">
+	            </td>
+	        </tr>
+	        <tr>
+		        <td height="30" align="center">
+		            <table border="0" width="100%">
+		                <tbody><tr>
+		                    <td width="65%" align="right">
+		                        
+		                        <input type="image" name="ibtnITSave" id="ibtnITSave" src="./images/btn_save.gif" alt="저장" onclick="return fnSaveCheck();" style="border-width:0px;vertical-align:bottom">
+		                        <a href="javascript:window.close();"><img src="./Images/btn_Close.JPG" border="0" style="vertical-align:bottom"></a>
+		                    </td>
+		                    <td align="right">
+		                        
+		                    </td>
+		                </tr>
+		            </tbody></table>
+		            
+		        </td>
+	        </tr>
+        </tbody></table>   
+    </div>
+    
+
+<script type="text/javascript">
+//<![CDATA[
+Sys.Application.initialize();
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadAjaxManager, {"_updatePanels":"","ajaxSettings":[],"clientEvents":{OnRequestStart:"",OnResponseEnd:""},"defaultLoadingPanelID":"","enableAJAX":true,"enableHistory":false,"links":[],"styles":[],"uniqueID":"RadAjaxManager1","updatePanelsRenderMode":0}, null, null, $get("RadAjaxManager1"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadDateInput, {"_focused":false,"_originalValue":"2026-09-16 오전 12:00:00","_postBackEventReferenceScript":"__doPostBack(\u0027txtSdate\u0027,\u0027\u0027)","_skin":"Office2007","clientStateFieldID":"txtSdate_dateInput_ClientState","dateFormat":"yyyy-MM-dd","dateFormatInfo":{"DayNames":["일요일","월요일","화요일","수요일","목요일","금요일","토요일"],"MonthNames":["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월",""],"AbbreviatedDayNames":["일","월","화","수","목","금","토"],"AbbreviatedMonthNames":["1","2","3","4","5","6","7","8","9","10","11","12",""],"AMDesignator":"오전","PMDesignator":"오후","DateSeparator":"-","TimeSeparator":":","FirstDayOfWeek":0,"DateSlots":{"Month":1,"Year":0,"Day":2},"ShortYearCenturyEnd":2029,"TimeInputOnly":false},"displayDateFormat":"yyyy-MM-dd","enabled":true,"incrementSettings":{InterceptArrowKeys:true,InterceptMouseWheel:true,Step:1},"styles":{HoveredStyle: ["width:100%;", "riTextBox riHover"],InvalidStyle: ["width:100%;", "riTextBox riError"],DisabledStyle: ["width:100%;", "riTextBox riDisabled"],FocusedStyle: ["width:100%;", "riTextBox riFocused"],EmptyMessageStyle: ["width:100%;", "riTextBox riEmpty"],ReadOnlyStyle: ["width:100%;", "riTextBox riRead"],EnabledStyle: ["width:100%;", "riTextBox riEnabled"]}}, null, null, $get("txtSdate_dateInput"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadCalendar, {"_DayRenderChangedDays":{},"_FormatInfoArray":[["일요일","월요일","화요일","수요일","목요일","금요일","토요일"],["일","월","화","수","목","금","토"],["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월",""],["1","2","3","4","5","6","7","8","9","10","11","12",""],"yyyy\u0027년\u0027 M\u0027월\u0027 d\u0027일\u0027 dddd tt h:mm:ss","yyyy\u0027년\u0027 M\u0027월\u0027 d\u0027일\u0027 dddd","tt h:mm:ss","M\u0027월\u0027 d\u0027일\u0027","ddd, dd MMM yyyy HH\u0027:\u0027mm\u0027:\u0027ss \u0027GMT\u0027","yyyy-MM-dd","tt h:mm","yyyy\u0027-\u0027MM\u0027-\u0027dd\u0027T\u0027HH\u0027:\u0027mm\u0027:\u0027ss","yyyy\u0027-\u0027MM\u0027-\u0027dd HH\u0027:\u0027mm\u0027:\u0027ss\u0027Z\u0027","yyyy\u0027년\u0027 M\u0027월\u0027","오전","오후","-",":",0],"_ViewRepeatableDays":{},"_ViewsHash":{"txtSdate_calendar_Top" : [[2026,9,1], 1]},"_calendarWeekRule":0,"_culture":"ko-KR","_enableKeyboardNavigation":false,"_enableViewSelector":false,"_firstDayOfWeek":7,"_postBackCall":"__doPostBack(\u0027txtSdate$calendar\u0027,\u0027@@\u0027)","clientStateFieldID":"txtSdate_calendar_ClientState","enableMultiSelect":false,"enabled":true,"monthYearNavigationSettings":["Today","OK","Cancel","Date is out of range.","False","True","300","1","300","1"],"skin":"Office2007","specialDaysArray":[],"stylesHash":{"DayStyle": ["", ""],"CalendarTableStyle": ["", "rcMainTable"],"OtherMonthDayStyle": ["", "rcOtherMonth"],"TitleStyle": ["", ""],"SelectedDayStyle": ["", "rcSelected"],"SelectorStyle": ["", ""],"DisabledDayStyle": ["", "rcDisabled"],"OutOfRangeDayStyle": ["", "rcOutOfRange"],"WeekendDayStyle": ["", "rcWeekend"],"DayOverStyle": ["", "rcHover"],"FastNavigationStyle": ["", "RadCalendarMonthView RadCalendarMonthView_Office2007"],"ViewSelectorStyle": ["", "rcViewSel"]},"useColumnHeadersAsSelectors":false,"useRowHeadersAsSelectors":false}, null, null, $get("txtSdate_calendar"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadDatePicker, {"_PopupButtonSettings":{ ResolvedImageUrl : "", ResolvedHoverImageUrl : ""},"_animationSettings":{ShowAnimationDuration:300,ShowAnimationType:1,HideAnimationDuration:300,HideAnimationType:1},"_popupControlID":"txtSdate_popupButton","clientStateFieldID":"txtSdate_ClientState","focusedDate":"2026-09-16-00-00-00"}, null, {"calendar":"txtSdate_calendar","dateInput":"txtSdate_dateInput"}, $get("txtSdate"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadDateInput, {"_focused":false,"_originalValue":"2026-09-16 오전 12:00:00","_postBackEventReferenceScript":"__doPostBack(\u0027txtEdate\u0027,\u0027\u0027)","_skin":"Office2007","clientStateFieldID":"txtEdate_dateInput_ClientState","dateFormat":"yyyy-MM-dd","dateFormatInfo":{"DayNames":["일요일","월요일","화요일","수요일","목요일","금요일","토요일"],"MonthNames":["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월",""],"AbbreviatedDayNames":["일","월","화","수","목","금","토"],"AbbreviatedMonthNames":["1","2","3","4","5","6","7","8","9","10","11","12",""],"AMDesignator":"오전","PMDesignator":"오후","DateSeparator":"-","TimeSeparator":":","FirstDayOfWeek":0,"DateSlots":{"Month":1,"Year":0,"Day":2},"ShortYearCenturyEnd":2029,"TimeInputOnly":false},"displayDateFormat":"yyyy-MM-dd","enabled":true,"incrementSettings":{InterceptArrowKeys:true,InterceptMouseWheel:true,Step:1},"styles":{HoveredStyle: ["width:100%;", "riTextBox riHover"],InvalidStyle: ["width:100%;", "riTextBox riError"],DisabledStyle: ["width:100%;", "riTextBox riDisabled"],FocusedStyle: ["width:100%;", "riTextBox riFocused"],EmptyMessageStyle: ["width:100%;", "riTextBox riEmpty"],ReadOnlyStyle: ["width:100%;", "riTextBox riRead"],EnabledStyle: ["width:100%;", "riTextBox riEnabled"]}}, null, null, $get("txtEdate_dateInput"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadCalendar, {"_DayRenderChangedDays":{},"_FormatInfoArray":[["일요일","월요일","화요일","수요일","목요일","금요일","토요일"],["일","월","화","수","목","금","토"],["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월",""],["1","2","3","4","5","6","7","8","9","10","11","12",""],"yyyy\u0027년\u0027 M\u0027월\u0027 d\u0027일\u0027 dddd tt h:mm:ss","yyyy\u0027년\u0027 M\u0027월\u0027 d\u0027일\u0027 dddd","tt h:mm:ss","M\u0027월\u0027 d\u0027일\u0027","ddd, dd MMM yyyy HH\u0027:\u0027mm\u0027:\u0027ss \u0027GMT\u0027","yyyy-MM-dd","tt h:mm","yyyy\u0027-\u0027MM\u0027-\u0027dd\u0027T\u0027HH\u0027:\u0027mm\u0027:\u0027ss","yyyy\u0027-\u0027MM\u0027-\u0027dd HH\u0027:\u0027mm\u0027:\u0027ss\u0027Z\u0027","yyyy\u0027년\u0027 M\u0027월\u0027","오전","오후","-",":",0],"_ViewRepeatableDays":{},"_ViewsHash":{"txtEdate_calendar_Top" : [[2026,9,1], 1]},"_calendarWeekRule":0,"_culture":"ko-KR","_enableKeyboardNavigation":false,"_enableViewSelector":false,"_firstDayOfWeek":7,"_postBackCall":"__doPostBack(\u0027txtEdate$calendar\u0027,\u0027@@\u0027)","clientStateFieldID":"txtEdate_calendar_ClientState","enableMultiSelect":false,"enabled":true,"monthYearNavigationSettings":["Today","OK","Cancel","Date is out of range.","False","True","300","1","300","1"],"skin":"Office2007","specialDaysArray":[],"stylesHash":{"DayStyle": ["", ""],"CalendarTableStyle": ["", "rcMainTable"],"OtherMonthDayStyle": ["", "rcOtherMonth"],"TitleStyle": ["", ""],"SelectedDayStyle": ["", "rcSelected"],"SelectorStyle": ["", ""],"DisabledDayStyle": ["", "rcDisabled"],"OutOfRangeDayStyle": ["", "rcOutOfRange"],"WeekendDayStyle": ["", "rcWeekend"],"DayOverStyle": ["", "rcHover"],"FastNavigationStyle": ["", "RadCalendarMonthView RadCalendarMonthView_Office2007"],"ViewSelectorStyle": ["", "rcViewSel"]},"useColumnHeadersAsSelectors":false,"useRowHeadersAsSelectors":false}, null, null, $get("txtEdate_calendar"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadDatePicker, {"_PopupButtonSettings":{ ResolvedImageUrl : "", ResolvedHoverImageUrl : ""},"_animationSettings":{ShowAnimationDuration:300,ShowAnimationType:1,HideAnimationDuration:300,HideAnimationType:1},"_popupControlID":"txtEdate_popupButton","clientStateFieldID":"txtEdate_ClientState","focusedDate":"2026-09-16-00-00-00"}, null, {"calendar":"txtEdate_calendar","dateInput":"txtEdate_dateInput"}, $get("txtEdate"));
+});
+//]]>
+</script>
+</form>
+
+
+<div id="schNameLst0" class="searchDiv" style="height: 306px; overflow: auto; display: none;"><table class="searchTable" id="test" style="width:360pxpx;">     <thead>         <tr>             <th>Employee ID.</th>             <th>Name</th>             <th>Department</th>         </tr>     </thead>     <tbody>     </tbody>     <tfoot>         <tr>  <td colspan="3" align="right" style="cursor:pointer;background-color:white;"> <b>[Close]</b> </td>  </tr></tfoot></table></div></body></html>

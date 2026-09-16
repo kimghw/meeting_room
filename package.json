@@ -1,0 +1,8 @@
+{
+  "name": "krs-meeting-room",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "jsdom": "^30.0.1"
+  }
+}

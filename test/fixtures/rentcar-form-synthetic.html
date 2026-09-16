@@ -1,0 +1,175 @@
+<!--
+  ##########################################################################
+  ##                                                                      ##
+  ##   경고: 이것은 실제 캡처가 아니라 **합성(synthetic) fixture** 다.     ##
+  ##                                                                      ##
+  ##   test/fixtures/ 의 다른 파일(list-2026-09-16.html,                   ##
+  ##   rentcar-2026-09-16.html)은 2026-09-16 로그인 상태에서 받은          ##
+  ##   **진짜 페이지**다. 이 파일만 사람이 손으로 지어낸 것이다.           ##
+  ##                                                                      ##
+  ##   차량 신청 폼(Admin_View_New.aspx?CARIDX=..&SDATE=..)은              ##
+  ##   **한 번도 캡처된 적이 없다.** 그래서 감지기(src/carform.js)를       ##
+  ##   돌려볼 대상이 필요해 "이렇게 생겼을 법한" 폼을 지어냈다.            ##
+  ##                                                                      ##
+  ##   무엇을 근거로 지어냈나                                             ##
+  ##     - 필드 이름: 차량 목록 페이지에 죽은 채 남은 fnSave()/fnCancel()  ##
+  ##       스크립트가 부르는 이름 (DDL_CARNAME, TXT_DRIVER,               ##
+  ##       TXT_DRIVER_DEPT_NAME, hidDriverID, TXT_TITLE, TXT_PLACE,       ##
+  ##       TXT_PASSENGER). **신청 페이지에서 확인된 것이 아니다.**        ##
+  ##     - 날짜 피커 마크업: 같은 사이트 회의실 페이지의 진짜             ##
+  ##       RadDatePicker(DP_ROOMDATE) markup 을 이름만 바꿔 흉내 냈다.     ##
+  ##     - 시/분 드롭다운·저장 버튼 이름: 순전히 **추측**이다.            ##
+  ##                                                                      ##
+  ##   그래서 이 파일로 통과했다고 실제 사이트에서 된다는 뜻이 아니다.     ##
+  ##   증명하는 것은 "감지기가 이런 모양을 만나면 제대로 찾아낸다"까지다.  ##
+  ##   진짜 캡처가 들어오면 이 파일을 버리지 말고 나란히 두고,             ##
+  ##   실제와 다른 부분을 감지기가 견디는지 보는 데 쓴다.                  ##
+  ##                                                                      ##
+  ##########################################################################
+-->
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>차량 예약 신청</title>
+  <script type="text/javascript">
+    // 이 alert 들은 **정적으로 박혀 있다.** 제출에 성공해도 응답에 그대로 들어 있으므로
+    // readAlert 가 "새로 생긴 문구"만 골라내지 못하면 성공을 오류로 보고하게 된다.
+    function fnSave() {
+        if (document.getElementById("DDL_CARNAME").value == "0") {
+            alert('렌트할 차량을 선택 하세요.');
+            return false;
+        }
+        if (document.getElementById("TXT_DRIVER").value == "") {
+            alert('운전자를 선택 하세요.');
+            return false;
+        }
+        if (document.getElementById("TXT_TITLE").value == "") {
+            alert('사용목적을 입력 하세요.');
+            return false;
+        }
+        if (document.getElementById("TXT_PLACE").value == "") {
+            alert('행선지를 입력 하세요.');
+            return false;
+        }
+        return true;
+    }
+    function __doPostBack(eventTarget, eventArgument) {
+        var theForm = document.forms['form1'];
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+  </script>
+</head>
+<body>
+<form name="form1" method="post" action="Admin_View_New.aspx?CARIDX=70&amp;SDATE=2026-09-16" id="form1">
+<div>
+  <input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+  <input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+  <input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="/wEPDwUKSYNTSEVUSUM=" />
+  <input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="A1B2C3D4" />
+  <input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="/wEWAgL0lPzZBw==" />
+</div>
+
+<table class="tbl_write">
+  <tbody>
+    <tr>
+      <th>차량</th>
+      <td>
+        <select name="DDL_CARNAME" id="DDL_CARNAME">
+          <option selected="selected" value="0">== 차량을 선택하세요 ==</option>
+          <option value="70">아반테CN74 (181허4360)</option>
+          <option value="71">아반테CN74 (181허4359)</option>
+          <option value="72">카니발 (203도7395)</option>
+          <option value="73">스타리아 (12가3456)</option>
+        </select>
+      </td>
+    </tr>
+
+    <tr>
+      <th>운전자</th>
+      <td>
+        <input name="TXT_DRIVER" type="text" id="TXT_DRIVER" value="" />
+        <input name="hidDriverID" type="hidden" id="hidDriverID" value="" />
+        <input type="button" value="찾기" onclick="fnFindDriver();" />
+      </td>
+    </tr>
+    <tr>
+      <th>소속 부서</th>
+      <td><input name="TXT_DRIVER_DEPT_NAME" type="text" id="TXT_DRIVER_DEPT_NAME" value="" /></td>
+    </tr>
+
+    <tr>
+      <th>사용일시</th>
+      <td>
+        <span id="DP_SDATE_wrapper" class="RadPicker">
+          <input style="visibility:hidden;display:block;width:1px;height:1px;" id="DP_SDATE" name="DP_SDATE" type="text" class="rdfd_ radPreventDecorate" value="2026-09-16" title="Visually hidden input created for functionality purposes." />
+          <input id="DP_SDATE_dateInput" name="DP_SDATE$dateInput" class="riTextBox riEnabled" value="2026-09-16" type="text" />
+          <input id="DP_SDATE_dateInput_ClientState" name="DP_SDATE_dateInput_ClientState" type="hidden" />
+          <input type="hidden" name="DP_SDATE_calendar_SD" id="DP_SDATE_calendar_SD" value="[]" />
+          <input type="hidden" name="DP_SDATE_calendar_AD" id="DP_SDATE_calendar_AD" value="[[1980,1,1],[2099,12,30],[2026,9,16]]" />
+          <input id="DP_SDATE_ClientState" name="DP_SDATE_ClientState" type="hidden" />
+        </span>
+        <select name="DDL_SHOUR" id="DDL_SHOUR">
+          <option value="00">00</option><option value="01">01</option><option value="02">02</option>
+          <option value="03">03</option><option value="04">04</option><option value="05">05</option>
+          <option value="06">06</option><option value="07">07</option><option value="08">08</option>
+          <option selected="selected" value="09">09</option><option value="10">10</option><option value="11">11</option>
+          <option value="12">12</option><option value="13">13</option><option value="14">14</option>
+          <option value="15">15</option><option value="16">16</option><option value="17">17</option>
+          <option value="18">18</option><option value="19">19</option><option value="20">20</option>
+          <option value="21">21</option><option value="22">22</option><option value="23">23</option>
+        </select> 시
+        <select name="DDL_SMINUTE" id="DDL_SMINUTE">
+          <option selected="selected" value="00">00</option><option value="10">10</option><option value="20">20</option>
+          <option value="30">30</option><option value="40">40</option><option value="50">50</option>
+        </select> 분
+        ~
+        <span id="DP_EDATE_wrapper" class="RadPicker">
+          <input style="visibility:hidden;display:block;width:1px;height:1px;" id="DP_EDATE" name="DP_EDATE" type="text" class="rdfd_ radPreventDecorate" value="2026-09-16" title="Visually hidden input created for functionality purposes." />
+          <input id="DP_EDATE_dateInput" name="DP_EDATE$dateInput" class="riTextBox riEnabled" value="2026-09-16" type="text" />
+          <input id="DP_EDATE_dateInput_ClientState" name="DP_EDATE_dateInput_ClientState" type="hidden" />
+          <input type="hidden" name="DP_EDATE_calendar_SD" id="DP_EDATE_calendar_SD" value="[]" />
+          <input type="hidden" name="DP_EDATE_calendar_AD" id="DP_EDATE_calendar_AD" value="[[1980,1,1],[2099,12,30],[2026,9,16]]" />
+          <input id="DP_EDATE_ClientState" name="DP_EDATE_ClientState" type="hidden" />
+        </span>
+        <select name="DDL_EHOUR" id="DDL_EHOUR">
+          <option value="00">00</option><option value="01">01</option><option value="02">02</option>
+          <option value="03">03</option><option value="04">04</option><option value="05">05</option>
+          <option value="06">06</option><option value="07">07</option><option value="08">08</option>
+          <option value="09">09</option><option value="10">10</option><option value="11">11</option>
+          <option value="12">12</option><option value="13">13</option><option value="14">14</option>
+          <option value="15">15</option><option value="16">16</option><option value="17">17</option>
+          <option selected="selected" value="18">18</option><option value="19">19</option><option value="20">20</option>
+          <option value="21">21</option><option value="22">22</option><option value="23">23</option>
+        </select> 시
+        <select name="DDL_EMINUTE" id="DDL_EMINUTE">
+          <option selected="selected" value="00">00</option><option value="10">10</option><option value="20">20</option>
+          <option value="30">30</option><option value="40">40</option><option value="50">50</option>
+        </select> 분
+      </td>
+    </tr>
+
+    <tr>
+      <th>사용목적</th>
+      <td><input name="TXT_TITLE" type="text" id="TXT_TITLE" value="" maxlength="100" /></td>
+    </tr>
+    <tr>
+      <th>행선지</th>
+      <td><input name="TXT_PLACE" type="text" id="TXT_PLACE" value="" maxlength="100" /></td>
+    </tr>
+    <tr>
+      <th>동승자</th>
+      <td><input name="TXT_PASSENGER" type="text" id="TXT_PASSENGER" value="" maxlength="100" /></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="btn_area">
+  <input type="image" name="BTN_SAVE" id="BTN_SAVE" src="../images/btn_save.gif" alt="저장" onclick="return fnSave();" />
+  <input type="image" name="BTN_CANCEL" id="BTN_CANCEL" src="../images/btn_cancel.gif" alt="취소" onclick="return fnCancel();" />
+  <a href="javascript:__doPostBack('BTN_LIST','')">목록</a>
+</div>
+</form>
+</body>
+</html>
