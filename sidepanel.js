@@ -6,7 +6,8 @@ import {
   CAR_LIST_URL, CAR_SHELL_URL,
 } from './src/rentcar.js';
 import { modifyReservation, describeModifyResult } from './src/modify.js';
-import { parseSmart, diagnoseSmart, nativeAvailable } from './src/llm.js';
+import { parseSmart, diagnoseSmart, nativeAvailable, nativeLogs } from './src/llm.js';
+import { createLogbook, formatEntries, buildLogReport, stamp } from './src/logbook.js';
 import { buildSaveDigest } from './src/diagnose.js';
 import { findSlots, MAX_DAYS, widenHours } from './src/search.js';
 import { collectMine, datesFrom, sameName } from './src/mine.js';
@@ -33,6 +34,8 @@ const el = {
   spanDays: $('spanDays'), spanControl: document.querySelector('.span-control'),
   mineWrap: $('mineWrap'), mineList: $('mineList'), mineEmpty: $('mineEmpty'), myName: $('myName'),
   scanBar: $('scanBar'), scanNote: $('scanNote'), scanFill: $('scanFill'),
+  logBox: $('logBox'), logCount: $('logCount'), logOut: $('logOut'),
+  logCopy: $('logCopy'), logSave: $('logSave'), logClear: $('logClear'),
 };
 
 // picks: 누적 선택. [{ room: 행번호, from: 슬롯, to: 슬롯 }]
@@ -40,6 +43,23 @@ const state = { day: null, picks: [], drag: null, loadedAt: 0, timer: null,
   region: null, regions: [], apiKey: '', found: [], cli: false, mode: 'room', extendTarget: null,
   justBooked: [], myName: '', mine: [], editTarget: null, carWho: null,
   foldOpen: false, foundKind: 'room', asking: false };
+
+/* ------------------------------------------------------------- 활동 기록 */
+
+const logbook = createLogbook({ storage: chrome.storage.local });
+
+/**
+ * 한 일을 기록한다. 기록은 곁다리다 — 실패해도, 느려도 본 작업을 막지 않도록 기다리지 않는다.
+ * API 키 같은 비밀은 data 에 넣지 않는다.
+ */
+function logEvent(kind, ok, text, data, opts = {}) {
+  logbook.add(kind, { ok, text, data, ...opts }).then(paintLog, () => {});
+}
+
+/** 수정·이어붙이기 결과에서 남길 것만 고른다. record 에는 화면 손잡이 같은 조각이 딸려 온다. */
+const modifyOutcome = (r) => (r && {
+  stage: r.stage, restored: r.restored, lost: r.lost, uncertain: r.uncertain, message: r.message,
+});
 
 /* ------------------------------------------------------------- 유틸 */
 
@@ -701,6 +721,10 @@ async function runScan(dates) {
     scanView.at = Date.now();
     paintScanBar();
   }
+  // 훑기를 기다리는 쪽이 여럿일 수 있어 실패는 여기서 한 번만 남긴다.
+  if (failed.length) {
+    logEvent('scan', false, failed.join(' · '), { range: scanView.range, days: dates.length, auth: !!authError });
+  }
   return { failed, authError };
 }
 
@@ -881,6 +905,8 @@ async function load({ force = false } = {}) {
     if (!day.confident) {
       // 예약 여부를 읽지 못한 것을 "예약 없음"으로 보여주면 안 된다.
       setStatus(`예약 여부를 확인할 수 없습니다 — ${day.reason} 아래 “구조 캡처”가 필요합니다.`, 'error');
+      logEvent('load', false, `${isCar() ? '차량' : '회의실'} ${date} 예약 여부를 읽지 못함 — ${day.reason}`,
+        { mode: state.mode, region: day.region, hours: h, rooms: day.rooms?.length });
     } else {
       if (isCar()) {
         const note = day.roomSource === 'table' ? ' · 그날 신청된 차량만 표시됨' : '';
@@ -900,6 +926,8 @@ async function load({ force = false } = {}) {
       state.day = null;
     }
     const stale = preview ? ` — 화면은 ${agoText(preview.readAt)} 미리 훑어 둔 것입니다.` : '';
+    logEvent('load', false, `${isCar() ? '차량' : '회의실'} ${date} 조회 실패: ${err.message}`,
+      { mode: state.mode, region: state.region, hours: h, auth: err instanceof AuthError, preview: !!preview });
     if (err instanceof AuthError) {
       setStatusHtml(`${err.message}${escapeHtml(stale)} <a href="#" id="openLogin">eclass 열기</a>`, 'error');
       openSiteOn('openLogin');
@@ -919,39 +947,15 @@ async function load({ force = false } = {}) {
 }
 
 /**
- * 예약이 안 됐을 때 무엇이 어긋났는지 남긴다. Claude 를 못 쓸 때의 수단이다.
+ * 예약이 안 됐을 때 무엇이 어긋났는지 작은 요약으로 만든다. 활동 기록과 원인 분석이 같이 쓴다.
  *
  * 응답 HTML 을 통째로 받아 적으면 100KB 가 넘는데 그중 쓸모 있는 건
  * **보낸 값과 응답에 남은 값의 차이** 뿐이다(2026-09-16 의 날짜 어긋남도 이걸로 찾았다).
- * 그래서 진단용 요약만 적는다.
  */
-async function dumpFailure(payload, result) {
+function saveDigest(payload, result) {
   if (!result.responseHtml) return null;
-  let digest;
   try {
-    digest = buildSaveDigest(result.responseHtml, result.baselineHtml, result.requestFields, payload);
-  } catch {
-    digest = null;
-  }
-  const body =
-    `===== 요청 =====
-${JSON.stringify({ payload, fields: result.requestFields }, null, 2)}
-
-` +
-    `===== 판정 =====
-${result.message}
-
-` +
-    (digest
-      ? `===== 응답 요약 (보낸 값 ↔ 응답에 남은 값) =====
-${JSON.stringify(digest, null, 2)}
-`
-      : `===== 응답 HTML =====
-${result.responseHtml}`);
-  try {
-    const url = URL.createObjectURL(new Blob([body], { type: 'text/plain;charset=utf-8' }));
-    await chrome.downloads.download({ url, filename: 'meetingroom-save-response.txt', saveAs: false });
-    return 'meetingroom-save-response.txt';
+    return buildSaveDigest(result.responseHtml, result.baselineHtml, result.requestFields, payload);
   } catch {
     return null;
   }
@@ -962,14 +966,13 @@ ${result.responseHtml}`);
  *
  * 예약이 됐는지 자체는 이미 재조회로 판정했다. 여기서는 **이유만** 읽는다.
  * 모델 판단이 결정적 검증을 덮어쓰지 않도록 하기 위해서다.
+ * @returns {Promise<{result: object, via: string} | null>}
  */
-async function explainFailure(payload, result) {
-  if (!result.responseHtml) return null;
+async function explainFailure(digest) {
+  if (!digest) return null;
   if (!state.cli && !state.apiKey) return null;
   try {
-    const digest = buildSaveDigest(result.responseHtml, result.baselineHtml, result.requestFields, payload);
-    const out = await diagnoseSmart(digest, { apiKey: state.apiKey, useNative: state.cli });
-    return out ? out.result : null;
+    return await diagnoseSmart(digest, { apiKey: state.apiKey, useNative: state.cli });
   } catch {
     return null;
   }
@@ -1031,9 +1034,12 @@ async function submitBooking() {
         result = { ok: false, submitted: false, message: err.message };
       }
 
+      const what = `${payload.room} ${payload.date} ${payload.start}~${payload.end}`;
       if (result.ok && result.verified) {
         done++;
         markPick(i, '✓', 'done');
+        logEvent('reserve', true, what,
+          { payload, message: result.message || undefined, owner: result.record?.owner || result.who?.name });
         rememberBooked([{
           mode: state.mode, date: payload.date, room: payload.room,
           start: parseInt(payload.start, 10) * 60 + +payload.start.slice(3),
@@ -1050,8 +1056,12 @@ async function submitBooking() {
           rememberName(result.record.owner);
         }
       } else {
-        failed.push({ payload, result });
+        const digest = saveDigest(payload, result);
+        failed.push({ payload, result, digest });
         markPick(i, result.submitted ? '⚠' : '✕', 'fail');
+        logEvent('reserve', false,
+          `${what} — ${result.submitted ? '제출했지만 확인 못 함' : '실패'}: ${result.message}`,
+          { payload, submitted: !!result.submitted, verified: result.verified, message: result.message, digest });
       }
 
       // 다음 건은 새 화면으로 보낸다(방금 넣은 예약도 반영된다)
@@ -1073,15 +1083,16 @@ async function submitBooking() {
   if (only) {
     setStatus('예약이 안 된 이유를 확인하는 중...');
     state.lastFailure = { payload: only.payload, result: only.result };
-    const found = await explainFailure(only.payload, only.result);
+    const out = await explainFailure(only.digest);
+    const found = out?.result;
     if (found) {
       const tag = { rejected: '사이트 거부', maybe_saved: '저장됐을 수 있음', unknown: '원인 불분명' }[found.verdict] || '';
       detail = ` — ${tag}: ${found.cause}` +
         (found.siteMessage ? ` (사이트 문구: "${found.siteMessage}")` : '') +
         (found.fix ? ` → ${found.fix}` : '');
+      logEvent('diagnose', true, `${only.payload.room} ${only.payload.date}${detail}`, { via: out.via, ...found });
     }
   }
-  const dumpNote = detail;
 
   // 넣은 날은 담아 둔 현황이 낡았다. 버려서 다음에 볼 때 다시 읽게 한다.
   forgetDays([...new Set(jobs.map((j) => j.date))], [state.mode === 'car' ? 'car' : 'room']);
@@ -1094,14 +1105,14 @@ async function submitBooking() {
     setStatus(`${done}건 예약 확인됨`);
   } else if (only.result.submitted) {
     setStatusHtml(
-      `${done}건 완료 · ⚠ ${failed.length}건은 제출됐지만 확인 못 함. ${escapeHtml(only.result.message)}${escapeHtml(dumpNote)} ` +
+      `${done}건 완료 · ⚠ ${failed.length}건은 제출됐지만 확인 못 함. ${escapeHtml(only.result.message)}${escapeHtml(detail)} ` +
       '<a href="#" id="openSite">사이트에서 확인</a>',
       'error',
     );
     openSiteOn('openSite');
   } else {
     setStatusHtml(
-      `${done}건 완료 · ${failed.length}건 실패. ${escapeHtml(only.result.message)}${escapeHtml(dumpNote)} ` +
+      `${done}건 완료 · ${failed.length}건 실패. ${escapeHtml(only.result.message)}${escapeHtml(detail)} ` +
       '<a href="#" id="openSite">사이트에서 예약</a>',
       'error',
     );
@@ -1190,6 +1201,10 @@ async function extendBooking() {
       },
     });
 
+    logEvent('extend', result.ok,
+      `${row.room.name} ${state.day.date} ${fmtTime(target.start)}~${fmtTime(target.end)} → ` +
+      `${fmtTime(merged.start)}~${fmtTime(merged.end)}${result.ok ? '' : ` — ${result.message}`}`,
+      { title, outcome: modifyOutcome(result) });
     if (result.ok) {
       rememberBooked([{ mode: state.mode, date: state.day.date, room: row.room.name, start: merged.start, end: merged.end, at: Date.now() }]);
     }
@@ -1209,6 +1224,7 @@ async function extendBooking() {
     }
   } catch (err) {
     setStatus(`이어붙이기 실패: ${err.message}`, 'error');
+    logEvent('extend', false, `${row.room.name} 이어붙이기 실패: ${err.message}`, { outcome: modifyOutcome(result) });
   } finally {
     el.extend.disabled = false;
     el.submit.disabled = false;
@@ -1239,6 +1255,8 @@ async function cancelFromMine(index) {
     const rec = findLiveRecord(day, it) || it.record;
 
     const r = car ? await cancelCarReservation(rec, day) : await cancelReservation(rec, day);
+    logEvent('cancel', r.ok, `${it.room} ${when}${r.ok ? '' : ` — ${r.message}`}`,
+      { from: 'mine', kind: it.kind, title: it.title, submitted: r.submitted, message: r.message || undefined });
     forgetDays([it.from.date]);
     if (r.ok) {
       state.justBooked = state.justBooked.filter((b) =>
@@ -1252,6 +1270,7 @@ async function cancelFromMine(index) {
     }
   } catch (err) {
     setStatus(`취소 실패: ${err.message}`, 'error');
+    logEvent('cancel', false, `${it.room} ${when} — ${err.message}`, { from: 'mine', kind: it.kind });
   } finally {
     el.refresh.disabled = false;
   }
@@ -1273,7 +1292,17 @@ async function cancelPicked() {
     for (let i = 0; i < cancels.length; i++) {
       const p = cancels[i];
       setStatus(`취소 중 ${i + 1}/${cancels.length}...`);
-      const r = await cancelOne(p.record, state.day);
+      const rec = p.record || {};
+      const what = `${rec.room || rec.name || '?'} ${state.day.date} ${fmtTime(rec.start)}~${fmtTime(rec.end)}`;
+      let r;
+      try {
+        r = await cancelOne(p.record, state.day);
+      } catch (err) {
+        logEvent('cancel', false, `${what} — ${err.message}`, { from: 'grid', mode: state.mode });
+        throw err;
+      }
+      logEvent('cancel', r.ok, `${what}${r.ok ? '' : ` — ${r.message}`}`,
+        { from: 'grid', mode: state.mode, title: rec.title, submitted: r.submitted, message: r.message || undefined });
       if (r.ok) {
         done++;
       } else {
@@ -1448,6 +1477,10 @@ async function runModify() {
   } finally {
     busy(false);
   }
+  logEvent('modify', result.ok,
+    `${t.room} ${t.date} ${fmtTime(t.start)}~${fmtTime(t.end)} → ${next.room} ${next.date} ${next.start}~${next.end}` +
+    (result.ok ? '' : ` — ${result.message}`),
+    { kind: t.kind, title, outcome: modifyOutcome(result) });
 
   state.picks = [];
   state.editTarget = null;
@@ -1484,6 +1517,9 @@ async function checkCli() {
   el.cliState.textContent = state.cli ? '연결됨' : '없음';
   el.cliState.className = `badge ${state.cli ? 'on' : 'off'}`;
   paintAskReady();
+  // 패널을 열 때마다 확인하므로, 상태가 바뀔 때만 남긴다.
+  logEvent('cli', state.cli, state.cli ? '로컬 Claude 다리 연결됨' : '로컬 Claude 다리 없음', undefined,
+    { onlyIfChanged: true });
 }
 
 const ASK_PLACEHOLDER = '말로 찾는 회의실/차량';
@@ -1815,8 +1851,13 @@ async function runAsk() {
     if (skipped.length) parts.push(`⚠ ${skipped.length}일은 확인 불가라 제외`);
     if (dates.length >= MAX_DAYS) parts.push(`최대 ${MAX_DAYS}일까지만 봅니다`);
     setAskNote(parts.join(' · '), skipped.length ? 'error' : '');
+    // 로컬 CLI 가 실패해 규칙 해석으로 내려간 사정(parsed.note)은 문장에 남긴다 — 결과는 나와도 고칠 거리다.
+    logEvent('ask', true,
+      `"${text}" → [${via}] ${noun} 빈 시간 ${results.length}건${parsed.note ? ` (${parsed.note})` : ''}`,
+      { kind, via: parsed.via, filter, costUsd: parsed.costUsd, days: dates.length, skipped: skipped.length });
   } catch (err) {
     setAskNote(err.message, 'error');
+    logEvent('ask', false, `"${text}" — ${err.message}`, { kind });
   } finally {
     state.asking = false;
     paintAskReady();
@@ -1878,6 +1919,115 @@ async function applyFound(i) {
 
 /* ------------------------------------------------------------- 진단 */
 
+const LOG_PREVIEW = 30;
+const BRIDGE_TAIL = 30;
+
+/** 다운로드 폴더에 글 파일로 남긴다. */
+async function saveText(text, filename) {
+  const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+  try {
+    await chrome.downloads.download({ url, filename, saveAs: false });
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }
+}
+
+/**
+ * 클립보드에 쓴다. 패널에 포커스가 없으면 clipboard API 가 거절하므로
+ * 옛 방식(execCommand)으로 한 번 더 해 본다.
+ */
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch { /* 아래로 */ }
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.setAttribute('readonly', '');
+  ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+  document.body.append(ta);
+  try {
+    ta.select();
+    return document.execCommand?.('copy') === true;
+  } catch {
+    return false;
+  } finally {
+    ta.remove();
+  }
+}
+
+const flashTimers = new WeakMap();
+
+/** 버튼 글자를 잠깐 바꿨다가 되돌린다. 누른 결과를 그 자리에서 보여준다. */
+function flash(btn, text, ms = 1800) {
+  if (!btn.dataset.label) btn.dataset.label = btn.textContent;
+  btn.textContent = text;
+  clearTimeout(flashTimers.get(btn));
+  flashTimers.set(btn, setTimeout(() => { btn.textContent = btn.dataset.label; }, ms));
+}
+
+/** 요약(건수)은 늘, 목록은 칸을 열었을 때만 그린다. 최신 것이 위로 온다. */
+async function paintLog() {
+  const list = await logbook.list();
+  const fails = list.filter((e) => !e.ok).length;
+  el.logCount.textContent = list.length ? `${list.length}건${fails ? ` · 실패 ${fails}` : ''}` : '기록 없음';
+  if (!el.logBox.open) return;
+  el.logOut.textContent = formatEntries(list.slice(-LOG_PREVIEW).reverse(), { detail: false });
+}
+
+async function logReport() {
+  const [entries, bridge] = await Promise.all([logbook.list(), nativeLogs(BRIDGE_TAIL)]);
+  return buildLogReport({
+    entries,
+    bridge,
+    meta: {
+      확장: chrome.runtime.getManifest?.()?.version,
+      탭: state.mode,
+      지역: state.region,
+      다리: state.cli ? '연결됨' : '없음',
+      API키: state.apiKey ? '있음' : '없음',
+      브라우저: navigator.userAgent,
+    },
+  });
+}
+
+async function copyLog() {
+  el.logCopy.disabled = true;
+  try {
+    const ok = await copyText(await logReport());
+    flash(el.logCopy, ok ? '복사됨 ✓' : '복사 실패 — 파일로 저장을 쓰세요', ok ? 1800 : 4000);
+  } finally {
+    el.logCopy.disabled = false;
+  }
+}
+
+async function saveLog() {
+  el.logSave.disabled = true;
+  try {
+    const name = `krs-log-${stamp(Date.now()).replace(/[-:]/g, '').replace(' ', '-')}.txt`;
+    await saveText(await logReport(), name);
+    flash(el.logSave, '저장됨 ✓');
+  } catch (err) {
+    flash(el.logSave, `저장 실패: ${err.message}`, 4000);
+  } finally {
+    el.logSave.disabled = false;
+  }
+}
+
+// 비우기는 되돌릴 수 없다. 브라우저 확인 창 대신 패널 안에서 두 번 눌러 확인한다.
+let clearArmedAt = 0;
+async function clearLog() {
+  if (Date.now() - clearArmedAt > 3000) {
+    clearArmedAt = Date.now();
+    flash(el.logClear, '한 번 더 누르면 지웁니다', 3000);
+    return;
+  }
+  clearArmedAt = 0;
+  await logbook.clear();
+  flash(el.logClear, '지웠습니다');
+  paintLog();
+}
+
 function summarize(html, finalUrl, via) {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   return {
@@ -1923,15 +2073,18 @@ async function runCapture() {
     const summary = summarize(list.html, list.finalUrl, list.via);
 
     const bundle = `===== SUMMARY =====\n${JSON.stringify(summary, null, 2)}\n\n===== RAW HTML =====\n${list.html}`;
-    const url = URL.createObjectURL(new Blob([bundle], { type: 'text/plain;charset=utf-8' }));
-    await chrome.downloads.download({ url, filename: isCar() ? 'rentcar-capture.txt' : 'meetingroom-capture.txt', saveAs: false });
+    const filename = isCar() ? 'rentcar-capture.txt' : 'meetingroom-capture.txt';
+    await saveText(bundle, filename);
 
     el.diagOut.textContent =
-      `저장됨: 다운로드 폴더 / meetingroom-capture.txt\n` +
+      `저장됨: 다운로드 폴더 / ${filename}\n` +
       `표 ${summary.tables.length}개, 입력칸 ${summary.inputs.length}개\n\n` +
       JSON.stringify(summary.tables, null, 1).slice(0, 1500);
+    logEvent('capture', true, `${filename} 저장`,
+      { url: summary.url, via: summary.via, bytes: summary.length, tables: summary.tables.length });
   } catch (err) {
     el.diagOut.textContent = `캡처 실패: ${err.message}`;
+    logEvent('capture', false, `캡처 실패: ${err.message}`, { mode: state.mode });
   } finally {
     el.capture.disabled = false;
   }
@@ -1964,6 +2117,9 @@ async function init() {
   state.foldOpen = !!saved.foldOpen;
   el.apiKey.value = state.apiKey;
   el.myName.value = state.myName;
+  // 패널을 연 것도 남긴다. 기록을 읽을 때 어디서 한 판이 시작됐는지가 보인다.
+  logEvent('open', true, `패널 열림 · v${chrome.runtime.getManifest?.()?.version ?? '?'}`,
+    { mode: saved.mode || 'room' });
   paintAskReady();
   checkCli();
   paintRegion();
@@ -2042,6 +2198,10 @@ async function init() {
     else prefetchMonth({ force: true });
   });
   el.capture.addEventListener('click', runCapture);
+  el.logBox.addEventListener('toggle', paintLog);
+  el.logCopy.addEventListener('click', copyLog);
+  el.logSave.addEventListener('click', saveLog);
+  el.logClear.addEventListener('click', clearLog);
   el.auto.addEventListener('change', () => {
     chrome.storage.local.set({ auto: el.auto.checked });
     applyAuto();

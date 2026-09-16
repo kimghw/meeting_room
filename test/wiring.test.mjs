@@ -29,17 +29,26 @@ async function boot(saved) {
     return orig.call(this, type, fn, opts);
   };
 
-  const calls = { load: 0, urls: [] };
+  const calls = { load: 0, urls: [], downloads: [], clipboard: [] };
+  // 쓴 것은 기억한다 — 활동 기록이 저장소를 거쳐 다시 읽히는지 여기서 본다.
+  const store = { ...saved };
   window.chrome = {
     storage: { local: {
-      get: async () => saved,
-      set: async () => {},
+      get: async () => store,
+      set: async (obj) => { Object.assign(store, obj); },
     } },
-    runtime: { sendNativeMessage: async () => { throw new Error('no host'); } },
+    runtime: {
+      sendNativeMessage: async () => { throw new Error('no host'); },
+      getManifest: () => ({ version: '9.9.9' }),
+    },
     tabs: { query: async () => [], create: async () => {} },
-    downloads: { download: async () => {} },
+    downloads: { download: async (opts) => { calls.downloads.push(opts); } },
     scripting: { executeScript: async () => [{ result: null }] },
   };
+  Object.defineProperty(globalThis, 'navigator', {
+    configurable: true,
+    value: { userAgent: 'wiring-test', clipboard: { writeText: async (text) => { calls.clipboard.push(text); } } },
+  });
   // 네트워크는 막는다. load() 가 실패해도 배선은 이미 끝나 있어야 한다.
   // 어느 화면을 두드렸는지는 남긴다 — 시작하자마자 한 달을 훑는지 여기서 본다.
   window.fetch = async (url) => { calls.load++; calls.urls.push(String(url)); throw new Error('offline'); };
@@ -52,7 +61,7 @@ async function boot(saved) {
 
   await import(`../sidepanel.js?bust=${Math.random()}`);
   await new Promise((r) => setTimeout(r, 60));   // init 의 await 가 풀릴 시간
-  return { wired, window, calls };
+  return { wired, window, calls, store };
 }
 
 console.log('회의실 모드로 시작');
@@ -167,6 +176,83 @@ console.log('현황 제목은 보고 있는 날짜를 말해야 한다');
   await new Promise((r) => setTimeout(r, 30));
   t('9월 19일 (토)', () =>
     assert.equal(doc.getElementById('scheduleDate').textContent, '9월 19일 (토)'));
+}
+
+console.log('활동 로그 — 남기고, 보여주고, 복사한다');
+{
+  const SECRET = 'sk-ant-wiring-secret';
+  const { window, wired, calls, store } = await boot({ mode: 'room', apiKey: SECRET });
+  const doc = window.document;
+  const settle = () => new Promise((r) => setTimeout(r, 40));
+  await new Promise((r) => setTimeout(r, 150));   // 미리 훑기까지 끝나 기록이 더 늘지 않을 때까지
+  // jsdom 에는 Blob URL 이 없다. 파일 저장은 주소만 있으면 된다.
+  globalThis.URL.createObjectURL = () => 'blob:wiring-test';
+  globalThis.URL.revokeObjectURL = () => {};
+
+  t('로그 버튼과 칸에 리스너', () => {
+    assert.ok(wired.get('logBox')?.has('toggle'));
+    for (const id of ['logCopy', 'logSave', 'logClear']) assert.ok(wired.get(id)?.has('click'), id);
+  });
+
+  const log = () => store.activityLog || [];
+  t('패널을 연 것이 남는다 (버전 포함)', () =>
+    assert.ok(log().some((e) => e.kind === 'open' && /v9\.9\.9/.test(e.text))));
+  t('로그인이 없어 조회 실패가 남는다', () =>
+    assert.ok(log().some((e) => e.kind === 'load' && !e.ok && /조회 실패/.test(e.text) && e.data?.auth)));
+  t('한 달 훑기 실패도 한 번 남는다', () =>
+    assert.equal(log().filter((e) => e.kind === 'scan').length, 1));
+  t('다리가 없다는 것도 남는다', () =>
+    assert.ok(log().some((e) => e.kind === 'cli' && !e.ok)));
+  t('API 키 같은 비밀은 남지 않는다', () => assert.ok(!JSON.stringify(log()).includes(SECRET)));
+  t('요약에 건수와 실패 수', () =>
+    assert.match(doc.getElementById('logCount').textContent, /^\d+건 · 실패 \d+$/));
+
+  const box = doc.getElementById('logBox');
+  const out = doc.getElementById('logOut');
+  t('닫혀 있을 때는 목록을 그리지 않는다', () => assert.equal(out.textContent, ''));
+  box.open = true;
+  box.dispatchEvent(new window.Event('toggle'));
+  await settle();
+  t('열면 최신 것이 위로 온다', () => {
+    const lines = out.textContent.split('\n');
+    assert.ok(lines.length >= 2);
+    assert.ok(lines[0] >= lines[lines.length - 1], '시각이 내림차순이 아니다');
+  });
+
+  doc.getElementById('logCopy').click();
+  await settle();
+  const copied = calls.clipboard.at(-1) || '';
+  t('복사하면 보고서가 클립보드로', () => {
+    assert.match(copied, /^KRS 회의실 예약 — 활동 로그/);
+    assert.match(copied, /== 확장 기록/);
+    assert.match(copied, /\[조회\]/);
+  });
+  t('보고서에 환경이 적힌다', () => assert.match(copied, /확장=9\.9\.9 · 탭=room/));
+  t('보고서에도 키는 없다 (있다는 사실만)', () => {
+    assert.ok(!copied.includes(SECRET));
+    assert.match(copied, /API키=있음/);
+  });
+  t('다리가 없으면 그 이유를 적는다', () => assert.match(copied, /가져오지 못했습니다: no host/));
+  t('버튼이 결과를 말해 준다', () => assert.equal(doc.getElementById('logCopy').textContent, '복사됨 ✓'));
+
+  doc.getElementById('logSave').click();
+  await settle();
+  t('파일로 저장하면 다운로드로 간다', () =>
+    assert.match(calls.downloads.at(-1)?.filename || '', /^krs-log-\d{8}-\d{6}\.txt$/));
+
+  const clear = doc.getElementById('logClear');
+  clear.click();
+  await settle();
+  t('비우기는 한 번 눌러서는 안 지운다', () => {
+    assert.ok(log().length > 0);
+    assert.match(clear.textContent, /한 번 더/);
+  });
+  clear.click();
+  await settle();
+  t('두 번 누르면 지운다', () => {
+    assert.equal(log().length, 0);
+    assert.equal(doc.getElementById('logCount').textContent, '기록 없음');
+  });
 }
 
 console.log('오늘 버튼은 오늘을 볼 때만 켜진다');

@@ -1,8 +1,8 @@
 ---
 name: bridge
-description: KRS 회의실 예약 확장의 로컬 Claude CLI 다리(네이티브 메시징) 설정·진단. 인자 없으면 여섯 항목 점검표를 출력하고 다음 할 일을 짚어준다. 등록(install)·왕복 확인(ping)·claude 호출까지 확인(test)·해제(uninstall)·확장 ID 계산(id)·크롬 재시작 명령(chrome). 등록·점검·크롬 실행 확인은 bridge_ops.ps1 로 위임한다. TRIGGER when 사용자가 /bridge 호출, 말로 찾기 칸이 잠김, 배지가 '없음', 'claude가 연결되지 않았습니다' 문구, 다리 등록·재등록, 새 PC 에 설치. DO NOT TRIGGER when eclass 로그인 문제, 예약 실패 진단, 포트·서비스 관리.
+description: KRS 회의실 예약 확장의 로컬 Claude CLI 다리(네이티브 메시징) 설정·진단. 인자 없으면 여섯 항목 점검표를 출력하고 다음 할 일을 짚어준다. 등록(install)·왕복 확인(ping)·claude 호출까지 확인(test)·다리 호출 기록 보기(log)·해제(uninstall)·확장 ID 계산(id)·크롬 재시작 명령(chrome). 등록·점검·크롬 실행 확인은 bridge_ops.ps1 로 위임한다. TRIGGER when 사용자가 /bridge 호출, 말로 찾기 칸이 잠김, 배지가 '없음', 'claude가 연결되지 않았습니다' 문구, 다리 등록·재등록, 새 PC 에 설치. DO NOT TRIGGER when eclass 로그인 문제, 예약 실패 진단, 포트·서비스 관리.
 allowed-tools: Bash PowerShell AskUserQuestion Read
-argument-hint: "[check|install [<ID>]|ping|test|chrome|id|uninstall|help]"
+argument-hint: "[check|install [<ID>]|ping|test|log [N]|chrome|id|uninstall|help]"
 ---
 
 # bridge — 로컬 Claude CLI 다리 설정·진단
@@ -43,6 +43,7 @@ argument-hint: "[check|install [<ID>]|ping|test|chrome|id|uninstall|help]"
 | `install <ID>` | 준 ID 로 등록. 계산이 틀어졌거나 `chrome://extensions` 에서 복사해 왔을 때 |
 | `ping` | 다리 왕복만 확인. claude 를 부르지 않아 공짜·빠름 |
 | `test` | `parse` 작업을 한 번 태워 **로그인까지** 확인 (과금 있음). 사용자에게 알리고 돌린다 |
+| `log [N]` | 다리가 `native\logs` 에 남긴 최근 호출 N건(기본 20, 최대 50). 종료 코드·stderr·모델 원문까지. 공짜 |
 | `chrome` | 실행 중인 크롬 명령줄을 그대로 출력 — 같은 프로필로 다시 띄우는 데 쓴다 |
 | `id` | 확장 ID 만 계산해 출력 |
 | `uninstall` | 등록 해제 |
@@ -56,7 +57,17 @@ argument-hint: "[check|install [<ID>]|ping|test|chrome|id|uninstall|help]"
 2. 5번이 `[--]` 면 **`install`**. ID 를 계산해 등록하고 왕복까지 확인한다.
 3. 6번이 남으면 **`chrome`** 으로 명령줄을 뽑아 사용자에게 준다.
    **크롬을 임의로 끄지 않는다** — 열린 탭이 다 닫히므로 반드시 먼저 묻는다.
-4. 등록도 왕복도 정상인데 패널이 여전히 실패하면 **`test`** 로 로그인을 확인한다(과금 고지 후).
+4. 등록도 왕복도 정상인데 패널이 여전히 실패하면 **먼저 `log`** 를 본다. 패널에서 실제로 부른
+   호출의 종료 코드와 stderr 가 남아 있어 대개 거기서 끝난다(공짜).
+   기록이 없거나 부족할 때만 **`test`** 로 로그인을 확인한다(과금 고지 후).
+
+## 기록
+
+- 다리는 `claude` 를 부를 때마다 성패와 상관없이 `native\logs\<날짜>.jsonl` 에 한 줄 남긴다.
+  `ping`·`logs` 는 남기지 않는다. 14일이 지난 파일은 다리가 뜰 때 지운다.
+- 응답보다 기록을 먼저 쓴다. 응답을 받은 크롬이 곧바로 다리 프로세스를 끊을 수 있어서다.
+- 패널의 `활동 로그 → 로그 복사` 는 확장 기록에 이 파일의 최근 30건을 붙여 준다(`logs` 작업).
+- 기록에는 사용자가 입력한 문장과 예약 요약이 들어 있다. 폴더째 복사할 때 따라간다.
 
 ## 새 PC 에 설치
 
@@ -78,5 +89,7 @@ argument-hint: "[check|install [<ID>]|ping|test|chrome|id|uninstall|help]"
 - **PowerShell 5.1 + BOM 없는 UTF-8 = 파싱 에러.** 한글 주석이 ANSI 로 읽혀 스크립트가 깨진다.
   이 폴더와 `native\*.ps1` 은 **UTF-8 BOM** 으로 저장한다. 편집했다면 인코딩을 다시 확인할 것.
 - **Node 는 `.bat` 을 직접 spawn 하지 못한다**(24부터, EINVAL). `ping.mjs` 는 크롬처럼 `cmd /c` 로 띄운다.
+- **`host.mjs` 를 import 하면 stdin 을 기다리며 멈춘다.** 불러오기만 할 때는 `KRS_HOST_NO_MAIN=1`
+  을 먼저 세운다(`logs.mjs`·`test/host.test.mjs` 가 그렇게 한다). 크롬이 띄울 때는 이 변수가 없다.
 - **"등록 완료" 는 성공이 아니다.** 3·6번은 등록 시점에 확인되지 않는다. 그래서 `install` 이
   끝나자마자 `ping` 을 돌리고, 의심되면 `test` 까지 간다.

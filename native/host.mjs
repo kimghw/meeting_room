@@ -2,8 +2,12 @@
 //
 // 확장은 임의의 명령을 보낼 수 없다. 여기서 정해둔 작업(task)만 실행하고
 // 시스템 프롬프트도 이 파일 안에 고정돼 있다. 확장이 보내는 것은 입력 텍스트뿐이다.
+// 호출마다 native/logs/<날짜>.jsonl 에 한 줄씩 남기고, logs 작업으로 최근 것을 돌려준다.
 
 import { spawn } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const MODEL = 'claude-haiku-4-5';
 
@@ -39,6 +43,70 @@ const TASKS = {
   },
 };
 
+/* ------------------------------------------------------------- 호출 기록 */
+
+// 확장은 파일을 쓸 수 없다. 다리 쪽 사정(종료 코드, stderr, 모델이 돌려준 원문)은
+// 여기서 남기지 않으면 어디에도 남지 않는다. 날짜별 JSONL 로 쓰고 오래된 것은 지운다.
+const LOG_DIR = process.env.KRS_BRIDGE_LOG_DIR ||
+  path.join(path.dirname(fileURLToPath(import.meta.url)), 'logs');
+const LOG_KEEP_DAYS = 14;
+const LOG_TAIL_MAX = 50;
+// 다리 → 크롬 메시지는 1MB 까지다. 기록을 돌려줄 때 넉넉히 그 절반에서 끊는다.
+const LOG_TAIL_BYTES = 512 * 1024;
+const LOG_FILE = /^(\d{4}-\d{2}-\d{2})\.jsonl$/;
+
+const pad = (n) => String(n).padStart(2, '0');
+const localDay = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+const clip = (s, n) =>
+  (typeof s === 'string' && s.length > n ? `${s.slice(0, n)}…(${s.length}자)` : s);
+
+/** 한 줄 남긴다. 실패해도 응답은 보내야 하므로 삼킨다 — stdout 에는 절대 쓰지 않는다(프레임이 깨진다). */
+export function writeLog(entry, dir = LOG_DIR) {
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+    const line = JSON.stringify({ at: new Date().toISOString(), ...entry });
+    fs.appendFileSync(path.join(dir, `${localDay(new Date())}.jsonl`), `${line}\n`);
+  } catch {
+    // 기록 실패로 다리가 멈추면 안 된다
+  }
+}
+
+/** 보관 기간이 지난 날짜 파일을 지운다. */
+export function pruneLogs(dir = LOG_DIR, now = new Date()) {
+  try {
+    const cutoff = localDay(new Date(now.getTime() - LOG_KEEP_DAYS * 86_400_000));
+    for (const f of fs.readdirSync(dir)) {
+      const m = f.match(LOG_FILE);
+      if (m && m[1] < cutoff) fs.unlinkSync(path.join(dir, f));
+    }
+  } catch {
+    // 폴더가 아직 없으면 지울 것도 없다
+  }
+}
+
+/** 최근 기록 n 건(오래된 것부터). 반쯤 쓰인 줄은 건너뛴다. */
+export function tailLogs(n, dir = LOG_DIR) {
+  const want = Math.min(Math.max(Number(n) || LOG_TAIL_MAX, 1), LOG_TAIL_MAX);
+  const out = [];
+  try {
+    const files = fs.readdirSync(dir).filter((f) => LOG_FILE.test(f)).sort().reverse();
+    for (const f of files) {
+      const lines = fs.readFileSync(path.join(dir, f), 'utf8').split('\n');
+      for (let i = lines.length - 1; i >= 0 && out.length < want; i--) {
+        if (!lines[i].trim()) continue;
+        try { out.push(JSON.parse(lines[i])); } catch { /* 건너뛴다 */ }
+      }
+      if (out.length >= want) break;
+    }
+  } catch {
+    return [];
+  }
+  out.reverse();
+  while (out.length > 1 && Buffer.byteLength(JSON.stringify(out)) > LOG_TAIL_BYTES) out.shift();
+  return out;
+}
+
 /* ------------------------------------------------- 네이티브 메시징 프레임 */
 
 function send(obj) {
@@ -63,6 +131,7 @@ function onMessage(handler) {
       try {
         msg = JSON.parse(body.toString('utf8'));
       } catch {
+        writeLog({ task: '(읽지 못함)', ok: false, error: '요청을 읽지 못했습니다.', bytes: size });
         send({ ok: false, error: '요청을 읽지 못했습니다.' });
         continue;
       }
@@ -79,6 +148,9 @@ function stripFence(text) {
   const m = t.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
   return (m ? m[1] : t).trim();
 }
+
+/** 기록에 남길 사정을 붙인 오류. 확장에는 message 만 간다. */
+const fail = (message, detail) => Object.assign(new Error(message), { detail });
 
 function runClaude(task, input) {
   return new Promise((resolve, reject) => {
@@ -106,43 +178,82 @@ function runClaude(task, input) {
 
     child.stdout.on('data', (d) => { out += d; });
     child.stderr.on('data', (d) => { err += d; });
-    child.on('error', (e) => { clearTimeout(timer); reject(new Error(`claude 실행 실패: ${e.message}`)); });
+    child.on('error', (e) => {
+      clearTimeout(timer);
+      reject(fail(`claude 실행 실패: ${e.message}`, { bin: CLAUDE_BIN, code: e.code }));
+    });
     child.on('close', (code) => {
       clearTimeout(timer);
-      if (code !== 0) return reject(new Error(err.trim().slice(0, 300) || `claude 종료 코드 ${code}`));
+      if (code !== 0) {
+        return reject(fail(err.trim().slice(0, 300) || `claude 종료 코드 ${code}`,
+          { exitCode: code, stderr: clip(err.trim(), 2000), stdout: clip(out.trim(), 1000) }));
+      }
 
       let env;
       try {
         env = JSON.parse(out);
       } catch {
-        return reject(new Error('CLI 출력을 해석하지 못했습니다.'));
+        return reject(fail('CLI 출력을 해석하지 못했습니다.', { stdout: clip(out.trim(), 2000) }));
       }
-      if (env.is_error) return reject(new Error(env.result || 'CLI 오류'));
+      if (env.is_error) {
+        return reject(fail(env.result || 'CLI 오류', { subtype: env.subtype, costUsd: env.total_cost_usd }));
+      }
 
       try {
         resolve({ data: JSON.parse(stripFence(env.result)), costUsd: env.total_cost_usd });
       } catch {
-        reject(new Error('모델이 JSON 을 돌려주지 않았습니다.'));
+        reject(fail('모델이 JSON 을 돌려주지 않았습니다.',
+          { raw: clip(env.result, 2000), costUsd: env.total_cost_usd }));
       }
     });
   });
 }
 
-/* ---------------------------------------------------------------- 진입 */
+/* ------------------------------------------------------------ 요청 처리 */
 
-onMessage(async (msg) => {
-  if (msg?.task === 'ping') return send({ ok: true, pong: true });
+/**
+ * 요청 하나를 처리해 돌려줄 응답을 만든다. claude 를 부른 것은 성패와 상관없이 기록한다.
+ * ping 과 logs 는 부를 때마다 남기면 기록이 그것으로 찬다 — 남기지 않는다.
+ *
+ * @param {object} msg
+ * @param {{ run?: Function, log?: Function, tail?: Function }} [deps] 테스트가 갈아 끼운다
+ */
+export async function handle(msg, { run = runClaude, log = writeLog, tail = tailLogs } = {}) {
+  if (msg?.task === 'ping') return { ok: true, pong: true };
+  if (msg?.task === 'logs') return { ok: true, entries: tail(msg.limit) };
 
   const task = TASKS[msg?.task];
-  if (!task) return send({ ok: false, error: `알 수 없는 작업: ${msg?.task}` });
+  if (!task) {
+    const error = `알 수 없는 작업: ${msg?.task}`;
+    log({ task: String(msg?.task), ok: false, error });
+    return { ok: false, error };
+  }
 
   const input = typeof msg.input === 'string' ? msg.input : '';
-  if (!input.trim()) return send({ ok: false, error: '입력이 비어 있습니다.' });
-
-  try {
-    const { data, costUsd } = await runClaude(task, input.slice(0, 20000));
-    send({ ok: true, data, costUsd });
-  } catch (e) {
-    send({ ok: false, error: e.message });
+  if (!input.trim()) {
+    log({ task: msg.task, ok: false, error: '입력이 비어 있습니다.' });
+    return { ok: false, error: '입력이 비어 있습니다.' };
   }
-});
+
+  const started = Date.now();
+  const base = { task: msg.task, model: MODEL, input: clip(input, 1500) };
+  try {
+    const { data, costUsd } = await run(task, input.slice(0, 20000));
+    log({ ...base, ok: true, ms: Date.now() - started, costUsd, data });
+    return { ok: true, data, costUsd };
+  } catch (e) {
+    log({ ...base, ok: false, ms: Date.now() - started, error: e.message, ...e.detail });
+    return { ok: false, error: e.message };
+  }
+}
+
+/* ---------------------------------------------------------------- 진입 */
+
+// 테스트는 handle 만 가져다 쓴다. 크롬이 띄울 때는 이 변수가 없으므로 늘 아래가 돈다.
+if (process.env.KRS_HOST_NO_MAIN !== '1') {
+  pruneLogs();
+  onMessage(async (msg) => {
+    // 기록을 먼저 쓰고 응답한다. 응답을 받은 크롬은 곧바로 이 프로세스를 끊을 수 있다.
+    send(await handle(msg));
+  });
+}

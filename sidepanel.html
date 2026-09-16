@@ -144,6 +144,23 @@
           <p class="hint">둘 다 없으면 <strong>말로 찾기</strong> 칸이 잠깁니다. 키는 이 브라우저에만 저장됩니다.</p>
         </div>
       </details>
+      <details id="logBox" class="diag">
+        <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg><span>활동 로그</span><span id="logCount" class="summary-detail">기록 없음</span></summary>
+        <div class="details-content">
+          <p class="hint">
+            예약·취소·수정, 말로 찾기, 조회 실패를 이 브라우저에 최근 500건까지 남깁니다.
+            문제가 생기면 <strong>로그 복사</strong>를 눌러 개발자에게 붙여 넣어 주세요.
+            로컬 Claude 다리의 기록(<code>native\logs</code>)도 함께 담깁니다.
+            회의 주제와 이름이 들어 있습니다.
+          </p>
+          <div class="log-actions">
+            <button id="logCopy" class="primary small">로그 복사</button>
+            <button id="logSave" class="ghost small">파일로 저장</button>
+            <button id="logClear" class="ghost small" title="이 브라우저의 기록만 지웁니다. native\logs 는 그대로 둡니다">비우기</button>
+          </div>
+          <pre id="logOut" class="diag-out log-out" aria-label="최근 활동 (최신 것부터)"></pre>
+        </div>
+      </details>
       <details class="diag">
         <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 7-5 5 5 5m8-10 5 5-5 5m-3-13-2 16"/></svg><span>페이지 구조 캡처</span><span class="summary-detail">진단</span></summary>
         <div class="details-content">

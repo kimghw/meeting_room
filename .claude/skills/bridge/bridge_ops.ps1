@@ -156,7 +156,8 @@ switch ($Command.ToLower()) {
   'install' { Invoke-Install }
   'ping' { & node (Join-Path (Split-Path -Parent $PSCommandPath) 'ping.mjs') (Get-ProjectRoot) }
   'test' { & node (Join-Path (Split-Path -Parent $PSCommandPath) 'ping.mjs') (Get-ProjectRoot) '--parse' }
+  'log' { & node (Join-Path (Split-Path -Parent $PSCommandPath) 'logs.mjs') (Get-ProjectRoot) $(if ($Arg) { $Arg } else { '20' }) }
   'uninstall' { & powershell -ExecutionPolicy Bypass -File (Join-Path (Get-ProjectRoot) 'native\uninstall.ps1') }
   'chrome' { Invoke-Chrome }
-  default { Write-Output '명령: id | check | install [<ID>] | ping | test | uninstall | chrome' }
+  default { Write-Output '명령: id | check | install [<ID>] | ping | test | log [<건수>] | uninstall | chrome' }
 }

@@ -21,6 +21,29 @@ export async function nativeAvailable() {
   }
 }
 
+/**
+ * 다리가 native/logs 에 남긴 최근 호출 기록을 받아 온다.
+ * 로그 복사는 클릭 직후 클립보드에 써야 하므로 오래 기다리지 않는다.
+ * @returns {Promise<{entries: object[]|null, error?: string}>}
+ */
+export async function nativeLogs(limit = 30, timeoutMs = 3000) {
+  let timer;
+  try {
+    const r = await Promise.race([
+      chrome.runtime.sendNativeMessage(NATIVE_HOST, { task: 'logs', limit }),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${timeoutMs / 1000}초 안에 응답 없음`)), timeoutMs);
+      }),
+    ]);
+    if (!r?.ok || !Array.isArray(r.entries)) return { entries: null, error: r?.error || '다리가 기록을 돌려주지 않았습니다' };
+    return { entries: r.entries };
+  } catch (err) {
+    return { entries: null, error: err.message };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function nativeTask(task, input) {
   const r = await chrome.runtime.sendNativeMessage(NATIVE_HOST, { task, input });
   if (!r?.ok) throw new Error(r?.error || '로컬 Claude 호출이 실패했습니다.');

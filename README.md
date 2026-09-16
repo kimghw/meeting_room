@@ -175,13 +175,32 @@ PC 에 claude 가 깔려 있는가가 아닙니다. 아래 `로컬 CLI 연결` �
 ID 는 **불러온 폴더 경로에서 나옵니다.** 폴더를 옮기면 ID 가 바뀌니 다시 등록해야 합니다.
 크롬을 `--user-data-dir` 로 따로 띄워 써도 등록은 `HKCU` 에 들어가므로 프로필과 무관하게 먹습니다.
 
-확장이 임의의 명령을 실행할 수는 없습니다. 호스트에는 `parse` 와 `diagnose` 두 작업만 있고
+확장이 임의의 명령을 실행할 수는 없습니다. `claude` 를 부르는 작업은 `parse` 와 `diagnose` 둘뿐이고
+(그 밖에는 연결 확인 `ping` 과 호출 기록 읽기 `logs`),
 시스템 프롬프트도 호스트 파일에 고정돼 있어, 확장이 보내는 것은 입력 텍스트뿐입니다.
 접근은 등록한 확장 ID 로만 제한됩니다.
 
 기본 에이전트 프롬프트를 빼서(`--exclude-dynamic-system-prompt-sections`)
 호출당 캐시 토큰이 38K → 4.2K, 비용이 $0.078 → $0.012 로 줄었습니다.
 해제는 `native\uninstall.ps1` 입니다.
+
+다리는 `claude` 를 부를 때마다 `native\logs\<날짜>.jsonl` 에 한 줄 남깁니다(입력·결과·비용·걸린 시간,
+실패면 종료 코드와 stderr). 14일이 지난 파일은 지웁니다. `/bridge log` 로 최근 기록을 볼 수 있습니다.
+
+## 활동 로그
+
+패널 아래 `활동 로그` 칸에 예약·취소·수정·이어붙이기, 말로 찾기, 조회·훑기 실패, 캡처,
+다리 연결 상태가 남습니다. 이 브라우저(`chrome.storage`)에 최근 500건까지 둡니다.
+같은 일이 이어지면 새 줄 대신 횟수만 올립니다(자동 갱신이 같은 실패로 목록을 채우지 않게).
+
+- **로그 복사** — 확장 기록 전부에 다리 기록(최근 30건)과 환경(버전·탭·다리·API 키 유무)을 붙여
+  클립보드에 넣습니다. 문제가 생기면 이것을 그대로 붙여 넣으면 됩니다.
+- **파일로 저장** — 같은 내용을 다운로드 폴더에 `krs-log-<시각>.txt` 로 저장합니다.
+- **비우기** — 두 번 눌러야 지웁니다. 이 브라우저 기록만 지우고 `native\logs` 는 그대로 둡니다.
+
+예약이 실패하면 응답에서 **보낸 값과 응답에 남은 값의 차이**만 추린 요약(`src/diagnose.js`)을
+그 기록에 같이 남깁니다. 예전에 다운로드 폴더에 따로 쓰던 `meetingroom-save-response.txt` 는 이것으로 대신합니다.
+기록에는 회의 주제·이름·입력한 문장이 들어 있고, API 키는 남기지 않습니다.
 
 로그인이 안 되어 있으면 안내와 함께 eclass 링크가 뜹니다. 로그인 후 다시 조회하세요.
 
@@ -208,8 +227,9 @@ ID 는 **불러온 폴더 경로에서 나옵니다.** 폴더를 옮기면 ID �
 | `src/mine.js` | 내 예약 판정(버튼·이름·예약 기록)과 모으기 |
 | `src/monthcache.js` | 한 달치 하루 기록 보관소(세 탭 공용, 읽은 시각·신선도) |
 | `src/nlq.js` | API 키 없이 쓰는 규칙 기반 질의 해석 |
-| `src/llm.js` | 로컬 CLI → API 키 → 규칙 순으로 백엔드 선택 |
-| `native/` | 로컬 Claude Code CLI 와 잇는 네이티브 메시징 다리 |
+| `src/llm.js` | 로컬 CLI → API 키 → 규칙 순으로 백엔드 선택, 다리 기록 받아 오기 |
+| `src/logbook.js` | 활동 기록(최근 500건)과 복사용 보고서 |
+| `native/` | 로컬 Claude Code CLI 와 잇는 네이티브 메시징 다리 (호출 기록은 `native/logs/`) |
 
 실제 회의실 앱은 `https://eclass.krs.co.kr/intra/intranet/VSDotnet/MeetingRoom/List.aspx` 이며,
 사내 포털 페이지가 이를 iframe 으로 감싸고 있습니다. 확장은 iframe 안쪽 주소로 직접 통신합니다.
@@ -232,6 +252,8 @@ node test/carform-real.test.mjs # 실제 신청 폼 캡처로 감지기·필수�
 node test/modify.test.mjs       # 수정: 취소→재예약→되돌리기 분기 전부
 node test/wiring.test.mjs       # init() 이 리스너를 다 붙이는지 (회귀 방지)
 node test/roomorder.test.mjs    # 화면 줄 차례와 접기 (실제 회의실 목록으로)
+node test/logbook.test.mjs      # 활동 기록: 합치기·버리기·동시 기록, 복사 보고서 모양
+node test/host.test.mjs         # 다리 호출 기록: 파일 쓰기·보관 기간·logs 작업 (실제 프로세스, claude 는 안 부름)
 ```
 
 ### 실제 크롬에서 (CDP)

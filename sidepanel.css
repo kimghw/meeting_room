@@ -222,6 +222,8 @@ button.pk-del:hover { color: var(--danger); }
 .grid-wrap > .hint { padding: 20px 12px; }
 .diag-out { max-height: 160px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted); font: 12px/1.6 ui-monospace, monospace; }
 .diag-out:empty { display: none; }
+.log-actions { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.log-out { max-height: 240px; }
 .footer-note { margin: 16px 0 0; text-align: center; color: var(--faint); font-size: 11px; letter-spacing: .1px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 @media (max-width: 440px) {
