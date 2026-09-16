@@ -1,13 +1,14 @@
-// 실제 크롬에서 돌려 보는 검사. jsdom 이 흉내 낼 수 없는 것만 여기서 본다.
+// 실제 크롬·엣지에서 돌려 보는 검사. jsdom 이 흉내 낼 수 없는 것만 여기서 본다.
 //
 //   node test/cdp/run.mjs
 //
-// 미리 디버그 포트를 연 크롬이 떠 있어야 한다(기본 9333, CDP_PORT 로 바꾼다).
+// 미리 디버그 포트를 연 브라우저가 떠 있어야 한다(기본 9333, CDP_PORT 로 바꾼다).
 // **크롬 136+ 는 기본 프로필에 디버그 포트를 붙여주지 않는다.** 따로 --user-data-dir 을
 // 줘야 하고, 그러면 쿠키 항아리가 달라져 로그인도 그 창에서 따로 해야 한다.
 //
 //   chrome.exe --remote-debugging-port=9333 --user-data-dir=<빈 폴더> \
 //              --load-extension=E:\dev\meeting_room
+//   msedge.exe --remote-debugging-port=9333 --user-data-dir=<빈 폴더>   (엣지도 같은 인자)
 //
 // 로그인해야 되는 검사는 로그인이 안 되어 있으면 **건너뛴다고 말하고** 넘어간다.
 // 조용히 통과시키면 "확인했다"는 거짓말이 된다 — 이 저장소가 가장 싫어하는 실패다.
@@ -52,18 +53,20 @@ let v;
 try {
   v = await version();
 } catch (err) {
-  console.error(`\n크롬이 ${PORT} 에서 응답하지 않습니다: ${err.message}`);
-  console.error('디버그 포트를 연 크롬을 먼저 띄우세요(이 파일 맨 위 주석 참고).');
+  console.error(`\n브라우저가 ${PORT} 에서 응답하지 않습니다: ${err.message}`);
+  console.error('디버그 포트를 연 크롬이나 엣지를 먼저 띄우세요(이 파일 맨 위 주석 참고).');
   process.exit(1);
 }
-t(`브라우저가 응답한다 (${v.Browser})`, () => assert(/Chrome/.test(v.Browser)));
+// 크롬은 "Chrome/153...", 엣지는 "Edg/153..." 이라고 답한다.
+t(`브라우저가 응답한다 (${v.Browser})`, () => assert(/Chrome|Edg/.test(v.Browser)));
 
 /* ------------------------------------------------------- 확장 찾기 */
 
 console.log('\n확장이 로드돼 있나');
 let extId = null;
 {
-  // 크롬이 기본으로 들고 있는 확장(월렛·행아웃)은 빼고 본다.
+  // 크롬이 기본으로 들고 있는 확장(월렛·행아웃)은 빼고 본다. 엣지는 자체 내장 확장이 더 있어
+  // 여기서 엉뚱한 것이 잡힐 수 있다 — 그래서 아래 manifestLoads 가 이름까지 확인한다.
   const live = (await targets())
     .find((x) => /^chrome-extension:\/\//.test(x.url || '') && !/nmmhkkeg|nkeimhog/.test(x.url));
 
@@ -75,10 +78,11 @@ let extId = null;
 
   const probe = await newTab('about:blank');
   const cli = await attach(probe);
+  // 아무 확장이나 manifest_version 은 있다. 우리 것인지는 이름으로 가린다.
   const manifestLoads = async (id) => {
     await cli.goto(`chrome-extension://${id}/manifest.json`, 8000);
     return cli
-      .evaluate('document.body ? document.body.innerText.includes("manifest_version") : false')
+      .evaluate('document.body ? document.body.innerText.includes("KRS 회의실 예약") : false')
       .catch(() => false);
   };
 
@@ -110,7 +114,7 @@ let extId = null;
 /* --------------------------------------------- 사이드패널 (로그인 불필요) */
 
 if (extId) {
-  console.log('\n사이드패널이 실제 크롬에서 뜨는가 (로그인 없이)');
+  console.log('\n사이드패널이 실제 브라우저에서 뜨는가 (로그인 없이)');
   const tab = await newTab('about:blank');
   const cli = await attach(tab);
   await cli.goto(`chrome-extension://${extId}/sidepanel.html`, 20000);
@@ -181,7 +185,7 @@ console.log('\n실제 사이트를 읽는다 (로그인 필요)');
 
   if (sawSignInAlert(cli)) {
     const why = `로그인 안 됨 — 사이트가 "${cli.dialogs[0].message}" 라고 했습니다. `
-      + `포트 ${PORT} 크롬 창에서 eclass 에 로그인한 뒤 다시 돌리세요.`;
+      + `포트 ${PORT} 브라우저 창에서 eclass 에 로그인한 뒤 다시 돌리세요.`;
     skipped('차량 목록 파싱', why);
     skipped('신청 폼 구조 확인', why);
     skipped('회의실 목록 파싱', why);
