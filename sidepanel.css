@@ -36,6 +36,16 @@ h1 { margin: 6px 0 0; font-size: 28px; line-height: 1.25; font-weight: 700; lett
 button.icon { width: 32px; min-height: 32px; padding: 7px; }
 .app-header .refresh { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow); color: var(--muted); }
 .app-header .refresh:hover { color: var(--pick); background: var(--pick-soft); }
+.head-tools { display: flex; flex: none; align-items: center; gap: 10px; }
+/* 홈 카드 사용 여부. 새로고침 버튼 옆의 작은 알약 — 눈에 띄되 제목을 밀어내지 않게. */
+.home-toggle {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 4px 11px 4px 9px;
+  border: 1px solid var(--line); border-radius: 999px; background: var(--surface); box-shadow: var(--shadow);
+  color: var(--muted); font-size: 13px; font-weight: 550; white-space: nowrap; cursor: pointer; user-select: none;
+}
+.home-toggle:hover { color: var(--fg); }
+.home-toggle:has(input:checked) { color: var(--pick); border-color: var(--pick); background: var(--pick-soft); }
+.home-toggle input { width: 15px; height: 15px; margin: 0; accent-color: var(--pick); cursor: pointer; }
 .refresh.spin svg { animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .controls { padding: 11px 16px; }

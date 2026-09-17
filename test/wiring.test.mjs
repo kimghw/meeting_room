@@ -36,10 +36,14 @@ async function boot(saved) {
   // 쓴 것은 기억한다 — 활동 기록이 저장소를 거쳐 다시 읽히는지 여기서 본다.
   const store = { ...saved };
   window.chrome = {
-    storage: { local: {
-      get: async () => store,
-      set: async (obj) => { Object.assign(store, obj); },
-    } },
+    storage: {
+      local: {
+        get: async () => store,
+        set: async (obj) => { Object.assign(store, obj); },
+        remove: async (keys) => { for (const k of [].concat(keys)) delete store[k]; },
+      },
+      onChanged: { addListener: () => {} },
+    },
     runtime: {
       sendNativeMessage: async () => { throw new Error('no host'); },
       getManifest: () => ({ version: '9.9.9' }),
@@ -110,6 +114,55 @@ console.log('회의실 모드로 시작');
     assert.ok(wired.get('cancelBooking')?.has('click'));
     assert.ok(wired.get('modify')?.has('click'), '수정 버튼에 리스너가 없다');
   });
+}
+
+console.log('홈의 내 예약 카드에서 누른 날짜로 연다');
+{
+  const { window, store } = await boot({ mode: 'mine', homeJump: { date: '2026-10-01', mode: 'car', at: Date.now() } });
+  const doc = window.document;
+  t('부탁받은 날짜가 잡힌다', () => assert.equal(doc.getElementById('date').value, '2026-10-01'));
+  t('저장된 모드 대신 차량 탭으로 열린다', () =>
+    assert.ok(doc.getElementById('tabCar').classList.contains('active')));
+  t('부탁은 읽고 지운다', () => assert.equal(store.homeJump, undefined));
+}
+{
+  const { window, store } = await boot({ mode: 'room', homeJump: { date: '2026-10-01', mode: 'car', at: Date.now() - 10 * 60_000 } });
+  const doc = window.document;
+  t('묵은 부탁은 무시한다', () => assert.notEqual(doc.getElementById('date').value, '2026-10-01'));
+  t('묵은 부탁도 지운다', () => assert.equal(store.homeJump, undefined));
+  t('회의실 탭 그대로', () => assert.ok(doc.getElementById('tabRoom').classList.contains('active')));
+}
+
+console.log('패널 머리의 홈 카드 체크박스');
+{
+  const { wired, window, store } = await boot({ mode: 'room' });
+  const doc = window.document;
+  const box = doc.getElementById('homeCard');
+  t('머리(새로고침 옆)에 있다', () => {
+    assert.ok(box, '체크박스가 없다');
+    assert.equal(box.type, 'checkbox');
+    assert.ok(box.closest('header.app-header'));
+  });
+  t('설정이 없으면 켜진 채로 뜬다', () => assert.equal(box.checked, true));
+  t('change 리스너', () => assert.ok(wired.get('homeCard')?.has('change')));
+  t('무엇을 켜고 끄는지 적혀 있다', () => assert.match(box.closest('label').textContent, /홈에 내 예약/));
+
+  box.checked = false;
+  box.dispatchEvent(new window.Event('change'));
+  await new Promise((r) => setTimeout(r, 40));
+  t('끄면 저장된다', () => assert.equal(store.homeCard, false));
+  t('끈 것이 활동 기록에 남는다', () =>
+    assert.ok((store.activityLog || []).some((e) => e.kind === 'setting' && /끔/.test(e.text))));
+
+  box.checked = true;
+  box.dispatchEvent(new window.Event('change'));
+  await new Promise((r) => setTimeout(r, 40));
+  t('다시 켜면 저장된다', () => assert.equal(store.homeCard, true));
+}
+{
+  const { window } = await boot({ mode: 'room', homeCard: false });
+  t('꺼 둔 설정이면 꺼진 채로 뜬다', () =>
+    assert.equal(window.document.getElementById('homeCard').checked, false));
 }
 
 console.log('차량 모드로 시작 (조기 return 회귀 방지)');

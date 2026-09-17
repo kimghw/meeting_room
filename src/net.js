@@ -142,6 +142,10 @@ async function tabFetch(url, init) {
   return { html: r.html, finalUrl: r.finalUrl };
 }
 
+/** 탭 경유 폴백을 쓸 수 있는 문맥인가. 콘텐츠 스크립트에는 tabs·scripting 이 없다(그쪽은 직접 요청이 곧 탭 안 요청이다). */
+export const canTabFetch = () =>
+  typeof chrome !== 'undefined' && !!chrome.tabs?.query && !!chrome.scripting?.executeScript;
+
 /**
  * 사이트에 요청한다. 직접 요청 → (실패/미인증 시) 탭 경유 순으로 시도한다.
  * @returns {Promise<{html: string, finalUrl: string, via: 'direct'|'tab'}>}
@@ -153,6 +157,13 @@ export async function siteFetch(url, init) {
     if (!looksUnauthenticated(r.html)) return { ...r, via: 'direct' };
   } catch (err) {
     directError = err;
+  }
+
+  // 탭 경유가 없는 문맥(홈의 콘텐츠 스크립트)이면 여기서 끝이다. 직접 요청이 곧 탭 안 요청이라
+  // 더 해 볼 것이 없다 — 미인증이면 미인증이라고, 실패면 그 실패를 그대로 말한다.
+  if (!canTabFetch()) {
+    if (directError) throw directError;
+    throw new AuthError('로그인이 필요합니다. eclass 에 로그인한 뒤 다시 조회하세요.');
   }
 
   try {

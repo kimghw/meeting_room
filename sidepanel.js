@@ -12,6 +12,10 @@ import { buildSaveDigest } from './src/diagnose.js';
 import { findSlots, MAX_DAYS, widenHours } from './src/search.js';
 import { collectMine, datesFrom, sameName } from './src/mine.js';
 import { MONTH_DAYS, createDayStore } from './src/monthcache.js';
+import {
+  CACHE_KEY as HOME_CACHE_KEY, JUMP_KEY as HOME_JUMP_KEY, JUMP_TTL_MS as HOME_JUMP_TTL_MS,
+  ENABLE_KEY as HOME_ENABLE_KEY, homeEnabled,
+} from './src/home.js';
 import { fmtTime, todayStr, buildGrid, canDelete } from './src/parse.js';
 import { isFoldedRoom, foldLabels } from './src/roomorder.js';
 
@@ -34,6 +38,7 @@ const el = {
   spanDays: $('spanDays'), spanControl: document.querySelector('.span-control'),
   mineWrap: $('mineWrap'), mineList: $('mineList'), mineEmpty: $('mineEmpty'), myName: $('myName'),
   scanBar: $('scanBar'), scanNote: $('scanNote'), scanFill: $('scanFill'),
+  homeCard: $('homeCard'),
   logBox: $('logBox'), logCount: $('logCount'), logOut: $('logOut'),
   logCopy: $('logCopy'), logSave: $('logSave'), logClear: $('logClear'),
 };
@@ -54,6 +59,17 @@ const logbook = createLogbook({ storage: chrome.storage.local });
  */
 function logEvent(kind, ok, text, data, opts = {}) {
   logbook.add(kind, { ok, text, data, ...opts }).then(paintLog, () => {});
+  if (CHANGES_SITE.has(kind)) forgetHome();
+}
+
+/**
+ * 예약이 바뀌었을 수 있는 일. 끝나면 홈의 내 예약 카드가 담아 둔 것을 지운다 — 카드는 그것을 보고 다시 훑는다.
+ * 성공·실패를 가리지 않는다. 수정은 취소까지만 되고 멈추기도 해서, 실패해도 사이트는 바뀌어 있을 수 있다.
+ */
+const CHANGES_SITE = new Set(['reserve', 'cancel', 'extend', 'modify']);
+
+function forgetHome() {
+  Promise.resolve().then(() => chrome.storage.local.remove(HOME_CACHE_KEY)).catch(() => {});
 }
 
 /** 수정·이어붙이기 결과에서 남길 것만 고른다. record 에는 화면 손잡이 같은 조각이 딸려 온다. */
@@ -1789,6 +1805,25 @@ function openMineItem(i) {
   applyMode(it.kind === 'car' ? 'car' : 'room');
 }
 
+/**
+ * 홈의 내 예약 카드가 남긴 "이 날짜로 가 달라"는 부탁을 읽고 지운다.
+ * 묵은 것은 무시한다 — 며칠 전에 눌러 둔 것이 다음에 패널을 열 때 튀어나오면 안 된다.
+ */
+async function takeHomeJump() {
+  const got = await chrome.storage.local.get(HOME_JUMP_KEY);
+  const jump = got?.[HOME_JUMP_KEY];
+  if (!jump) return null;
+  Promise.resolve().then(() => chrome.storage.local.remove(HOME_JUMP_KEY)).catch(() => {});
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(jump.date || '') || Date.now() - (jump.at || 0) > HOME_JUMP_TTL_MS) return null;
+  return jump;
+}
+
+/** 부탁받은 날짜·종류로 간다. 내 예약 목록에서 한 줄을 누른 것과 같다. */
+function applyHomeJump(jump) {
+  el.date.value = jump.date;
+  return applyMode(jump.mode === 'car' ? 'car' : 'room');
+}
+
 function setAskNote(msg, kind = '') {
   el.askNote.className = `ask-note ${kind}`;
   el.askNote.textContent = msg;
@@ -2107,7 +2142,7 @@ async function init() {
 
   const saved = await chrome.storage.local.get(
     ['hourStart', 'hourEnd', 'region', 'apiKey', 'mode', 'justBooked', 'myName', 'spanDays',
-      'foldOpen']);
+      'foldOpen', HOME_ENABLE_KEY]);
   if (saved.hourStart != null) el.hourStart.value = saved.hourStart;
   if (saved.hourEnd != null) el.hourEnd.value = saved.hourEnd;
   if (saved.spanDays != null) el.spanDays.value = saved.spanDays;
@@ -2118,6 +2153,7 @@ async function init() {
   state.foldOpen = !!saved.foldOpen;
   el.apiKey.value = state.apiKey;
   el.myName.value = state.myName;
+  el.homeCard.checked = homeEnabled(saved[HOME_ENABLE_KEY]);
   // 패널을 연 것도 남긴다. 기록을 읽을 때 어디서 한 판이 시작됐는지가 보인다.
   logEvent('open', true, `패널 열림 · v${chrome.runtime.getManifest?.()?.version ?? '?'}`,
     { mode: saved.mode || 'room' });
@@ -2186,6 +2222,12 @@ async function init() {
     chrome.storage.local.set({ spanDays: el.spanDays.value });
     load();
   });
+  // 홈 카드 사용 여부. 열려 있는 홈 탭은 저장소 변화를 듣고 곧바로 카드를 떼거나 붙인다.
+  el.homeCard.addEventListener('change', () => {
+    const on = el.homeCard.checked;
+    chrome.storage.local.set({ [HOME_ENABLE_KEY]: on });
+    logEvent('setting', true, `e-Class 홈 내 예약 카드 ${on ? '켬' : '끔'}`);
+  });
   el.myName.addEventListener('change', () => {
     state.myName = el.myName.value.trim();
     chrome.storage.local.set({ myName: state.myName });
@@ -2232,7 +2274,18 @@ async function init() {
   applyAuto();
 
   // 리스너를 모두 붙인 뒤에 모드를 맞춘다. applyMode 가 조회까지 해준다.
-  const first = (saved.mode === 'car' || saved.mode === 'mine') ? applyMode(saved.mode) : load();
+  // 홈의 내 예약 카드에서 한 건을 눌러 열렸으면 저장된 모드 대신 그 날짜·종류로 간다.
+  const jump = await takeHomeJump();
+  const first = jump ? applyHomeJump(jump)
+    : (saved.mode === 'car' || saved.mode === 'mine') ? applyMode(saved.mode) : load();
+  // 패널이 이미 열려 있을 때 홈에서 누르면 저장소 변화로 온다.
+  chrome.storage.onChanged?.addListener((changes, area) => {
+    if (area !== 'local') return;
+    // 다른 창의 패널에서 바꿨으면 이 창의 체크박스도 따라간다.
+    if (HOME_ENABLE_KEY in changes) el.homeCard.checked = homeEnabled(changes[HOME_ENABLE_KEY].newValue);
+    if (!changes[HOME_JUMP_KEY]?.newValue) return;
+    takeHomeJump().then((j) => { if (j) applyHomeJump(j); });
+  });
 
   // 보고 있는 탭을 먼저 띄운 다음, 오늘부터 한 달을 미리 훑는다.
   // 세 탭이 같은 캐시를 보므로 이 한 번으로 회의실·차량·내 예약이 모두 채워진다.

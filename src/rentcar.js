@@ -274,12 +274,13 @@ export async function loadCarDay(dateStr, hours = DEFAULT_HOURS) {
  *
  * @param {string[]} dates 'YYYY-MM-DD' 오름차순
  * @param {(date: string, i: number, n: number) => void} onProgress
- * @param {{onDay?: (day: object) => void}} opts
+ * @param {{onDay?: (day: object) => void, signal?: AbortSignal}} opts
  *   onDay 는 하루를 읽을 때마다 부른다. 다 기다리지 않고 **읽는 대로** 화면에 쌓으려고.
+ *   signal 이 멈추면 다음 날짜로 넘어가지 않고 거기까지 읽은 것을 돌려준다(홈 카드를 껐을 때).
  * @returns {Promise<Array<{kind:'car', date:string, reservations:Array, rooms:Array, confident:boolean, reason:string}>>}
  */
 export async function scanCarDays(dates, onProgress = () => {}, opts = {}) {
-  const { onDay = null } = opts;
+  const { onDay = null, signal = null } = opts;
 
   const first = await siteFetch(CAR_LIST_URL);
   let doc = parseHtml(first.html);
@@ -296,6 +297,7 @@ export async function scanCarDays(dates, onProgress = () => {}, opts = {}) {
   };
 
   for (let i = 0; i < dates.length; i++) {
+    if (signal?.aborted) break;
     const date = dates[i];
     onProgress(date, i + 1, dates.length);
 

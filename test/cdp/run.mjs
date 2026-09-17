@@ -19,6 +19,7 @@ const EXT_PATH = 'E:\\dev\\meeting_room';
 const ORIGIN = 'https://eclass.krs.co.kr';
 const CAR_LIST = `${ORIGIN}/intra/intranet/VSDotnet/RentCar/New_List.aspx?s_code=0102010300`;
 const ROOM_LIST = `${ORIGIN}/intra/intranet/VSDotnet/MeetingRoom/List.aspx`;
+const HOME = `${ORIGIN}/eClassVer4/Home/Index`;
 
 let pass = 0;
 let skip = 0;
@@ -120,19 +121,27 @@ if (extId) {
   await cli.goto(`chrome-extension://${extId}/sidepanel.html`, 20000);
   await new Promise((r) => setTimeout(r, 2500));   // init() 이 한 달 훑기를 시작했다 실패할 시간
 
-  const view = await cli.evaluate(`(() => {
+  // 패널은 **마지막에 보던 탭**으로 열린다(저장된 mode). 내 예약 탭이면 격자가 숨고, 로그인돼 있으면
+  // 훑기가 끝날 때까지 상태줄이 "...중..." 이다. 그래서 상태줄이 가라앉을 때까지 기다리고 탭에 맞춰 본다.
+  const view = await cli.evaluate(`(async () => {
     const q = (id) => document.getElementById(id);
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const statusText = () => (q('status')?.textContent || '').trim();
+    for (let i = 0; i < 90 && /중\\.\\.\\.$/.test(statusText()); i++) await wait(1000);
     const need = ['date','hourStart','hourEnd','refresh','submit','cancelBooking',
-                  'extend','modify','fPlace','fPassenger','fTitle','editNote','carFields'];
+                  'extend','modify','fPlace','fPassenger','fTitle','editNote','carFields','homeCard'];
     return {
       tabs: ['tabRoom','tabCar','tabMine'].every((id) => !!q(id)),
       missing: need.filter((id) => !q(id)),
-      status: (q('status')?.textContent || '').trim(),
+      status: statusText(),
       grid: !!q('grid'),
       // 실제로 칠해진 칸 수. 0 이면 현황을 못 그린 것이다.
       slots: q('grid') ? q('grid').querySelectorAll('td.slot').length : 0,
+      mine: !!q('tabMine')?.classList.contains('active'),
+      mineItems: q('mineList')?.children.length || 0,
+      mineEmpty: !!q('mineEmpty') && !q('mineEmpty').classList.contains('hidden'),
     };
-  })()`);
+  })()`, 100000);
 
   t('JS 예외 없이 뜬다', () => assert(
     cli.errors.length === 0,
@@ -145,12 +154,16 @@ if (extId) {
   // 격자를 못 그렸으면 **왜 못 그렸는지** 말해야 한다. 빈 화면을 말없이 두면
   // 쓰는 사람은 "예약이 하나도 없다"로 읽는다 — 이 앱에서 가장 나쁜 실패다.
   // 로그인 여부에 따라 둘 중 하나여야 하고, 어느 쪽도 아니면 잘못이다.
-  t('현황을 그리거나, 못 그린 이유를 말하거나 (둘 중 하나)', () => assert(
-    view.slots > 0 || /로그인|sign in|확인 불가|읽지 못|실패/i.test(view.status),
-    `칸 ${view.slots}개인데 상태줄이 "${view.status}" 라 이유를 말하지 않는다`,
+  const drew = view.mine ? (view.mineItems > 0 || view.mineEmpty) : view.slots > 0;
+  t(`현황을 그리거나, 못 그린 이유를 말하거나 (둘 중 하나)${view.mine ? ' — 내 예약 탭으로 열림' : ''}`, () => assert(
+    drew || /로그인|sign in|확인 불가|읽지 못|실패/i.test(view.status),
+    view.mine
+      ? `내 예약 ${view.mineItems}건·빈 안내 ${view.mineEmpty ? '보임' : '숨음'}인데 상태줄이 "${view.status}" 라 이유를 말하지 않는다`
+      : `칸 ${view.slots}개인데 상태줄이 "${view.status}" 라 이유를 말하지 않는다`,
   ));
-  if (view.slots > 0) {
-    t(`로그인 상태에서 현황을 그렸다 (${view.slots}칸 · "${view.status.slice(0, 40)}")`, () => assert(true));
+  if (drew) {
+    const what = view.mine ? `내 예약 ${view.mineItems}건` : `${view.slots}칸`;
+    t(`로그인 상태에서 현황을 그렸다 (${what} · "${view.status.slice(0, 40)}")`, () => assert(true));
   }
 
   const carView = await cli.evaluate(`(async () => {
@@ -189,6 +202,7 @@ console.log('\n실제 사이트를 읽는다 (로그인 필요)');
     skipped('차량 목록 파싱', why);
     skipped('신청 폼 구조 확인', why);
     skipped('회의실 목록 파싱', why);
+    skipped('홈 내 예약 카드', why);
   } else {
     const car = await cli.evaluate(`(() => {
       const grid = document.getElementById('RG_MAIN_ctl00');
@@ -245,6 +259,70 @@ console.log('\n실제 사이트를 읽는다 (로그인 필요)');
       };
     })()`);
     t('회의실 표도 읽는다', () => assert(room.hasGrid, JSON.stringify(room)));
+
+    // 홈의 내 예약 카드 — 콘텐츠 스크립트가 붙어 목록을 그리거나, 못 그린 이유를 말하는지.
+    // 훑기는 서른 날이라 시간이 걸린다. 카드가 뜨는 것과 바쁨이 풀리는 것을 따로 기다린다.
+    if (extId) {
+      await cli.goto(HOME, 25000);
+      const strip = await cli.evaluate(`(async () => {
+        const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+        let root = null;
+        for (let i = 0; i < 20 && !(root = document.getElementById('krsMine')); i++) await wait(500);
+        if (!root) return { mounted: false };
+        for (let i = 0; i < 180 && root.getAttribute('aria-busy') === 'true'; i++) await wait(1000);
+        const text = (role) => (root.querySelector('[data-role="' + role + '"]')?.textContent || '').trim();
+        return {
+          mounted: true,
+          beforeNotice: root.nextElementSibling?.id === 'divPopupInfo',
+          busy: root.getAttribute('aria-busy') === 'true',
+          items: root.querySelectorAll('li.krs-mine-item').length,
+          note: text('note'), empty: text('empty'), warn: text('warn'),
+        };
+      })()`, 200000);
+      t('홈에 내 예약 카드가 붙는다', () =>
+        assert(strip.mounted, '카드가 없다 — manifest 가 바뀌었으면 확장을 다시 올려야 한다'));
+      if (strip.mounted) {
+        t('Popup Notice 카드 바로 위에 있다', () => assert(strip.beforeNotice));
+        t('훑기가 시간 안에 끝난다', () => assert(!strip.busy, strip.note));
+        t('목록을 그리거나, 못 그린 이유를 말하거나 (둘 중 하나)', () => assert(
+          strip.items > 0 || strip.empty || strip.warn, JSON.stringify(strip)));
+        console.log(`  note  ${strip.note}${strip.items ? ` · ${strip.items}건` : ''}${strip.warn ? ` · ${strip.warn}` : ''}`);
+
+        // 패널 머리의 체크박스를 사람처럼 눌러 끄고 켠다. 열려 있는 홈에 새로고침 없이 반영돼야 한다.
+        // 끝나면 반드시 켜 둔다 — 검사가 사용자의 설정을 꺼 둔 채로 남기면 안 된다.
+        const panelTab = await newTab('about:blank');
+        const panel = await attach(panelTab);
+        const flip = (want) => panel.evaluate(`(async () => {
+          const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+          let box = null;
+          for (let i = 0; i < 25 && !(box = document.getElementById('homeCard')); i++) await wait(200);
+          if (!box) return null;
+          if (box.checked !== ${want}) box.click();
+          await wait(300);
+          return (await chrome.storage.local.get('homeCard')).homeCard;
+        })()`);
+        const cardShown = () => cli.evaluate(`(async () => {
+          await new Promise((r) => setTimeout(r, 800));
+          return !!document.getElementById('krsMine');
+        })()`);
+        try {
+          await panel.goto(`chrome-extension://${extId}/sidepanel.html`, 20000);
+          const stored = await flip(false);
+          const goneAfterOff = !(await cardShown());
+          await flip(true);
+          const backAfterOn = await cardShown();
+          t('패널 체크박스를 끄면 설정이 저장된다', () => assert(stored === false, String(stored)));
+          t('끄면 열려 있는 홈에서 카드가 곧바로 사라진다', () => assert(goneAfterOff));
+          t('다시 켜면 새로고침 없이 카드가 돌아온다', () => assert(backAfterOn));
+        } finally {
+          await flip(true).catch(() => {});
+          panel.close();
+          await closeTab(panelTab.id);
+        }
+      }
+    } else {
+      skipped('홈 내 예약 카드', '확장 ID 를 못 찾음');
+    }
   }
 
   cli.close();

@@ -14,9 +14,15 @@
         <div class="eyebrow"><span class="brand-mark" aria-hidden="true">K</span> KRS WORKSPACE</div>
         <h1 id="appTitle">회의실 예약<span class="title-dot">.</span></h1>
       </div>
-      <button id="refresh" class="icon refresh" title="새로고침" aria-label="예약 현황 새로고침">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 7a7 7 0 0 1 11.6-1L20 9M4 15l2.3 3A7 7 0 0 0 17.9 17"/></svg>
-      </button>
+      <div class="head-tools">
+        <label class="home-toggle" title="e-Class 홈 맨 위에 내 예약 카드를 붙입니다. 끄면 열려 있는 홈에서도 곧바로 사라지고, 홈에서 예약을 훑지도 않습니다.">
+          <input type="checkbox" id="homeCard" checked />
+          <span>홈에 내 예약</span>
+        </label>
+        <button id="refresh" class="icon refresh" title="새로고침" aria-label="예약 현황 새로고침">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 7a7 7 0 0 1 11.6-1L20 9M4 15l2.3 3A7 7 0 0 0 17.9 17"/></svg>
+        </button>
+      </div>
     </header>
     <nav class="tabs" role="tablist" aria-label="예약 종류">
       <button id="tabRoom" class="tab active" role="tab" aria-selected="true">회의실</button>
