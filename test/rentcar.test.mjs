@@ -10,12 +10,24 @@ const html = fs.readFileSync(new URL('./fixtures/rentcar-2026-09-16.html', impor
 const doc = new JSDOM(html).window.document;
 const DATE = '2026-09-16';
 
-const { parseCarMoment, parseCarRange, clipToDate, parseCarShownDate, extractCars } =
-  await import('../src/rentcar.js');
+const {
+  parseCarMoment, parseCarRange, clipToDate, parseCarShownDate, extractCars,
+  CAR_LIST_URL, CAR_SHELL_URL,
+} = await import('../src/rentcar.js');
 const { buildGrid, fmtTime } = await import('../src/parse.js');
 
 let pass = 0;
 const t = (name, fn) => { fn(); pass++; console.log('  ok  ' + name); };
+
+console.log('새 탭 주소');
+// 사이트 메뉴의 '본부공용차량 이용신청' 탭은 GAPSU 껍데기 없이 intra 목록 페이지를 새 창으로 연다.
+// 한때 옆 탭 '차량리스트'(BVM_Car_List.aspx) 로 가서 예약 버튼이 없는 화면에 떨어졌다.
+t("새 탭은 '본부공용차량 이용신청'(New_List.aspx?s_code=0102010300) 을 연다", () => {
+  assert.equal(CAR_SHELL_URL, CAR_LIST_URL);
+  assert.ok(CAR_SHELL_URL.endsWith('/intra/intranet/VSDotnet/RentCar/New_List.aspx?s_code=0102010300'));
+});
+t("옆 탭 '차량리스트'(BVM_Car_List) 로 가지 않는다", () =>
+  assert.doesNotMatch(CAR_SHELL_URL, /BVM_Car_List/));
 
 console.log('시각 파싱');
 t('26.09.16 (수) 09:00', () =>

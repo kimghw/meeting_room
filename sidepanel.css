@@ -66,13 +66,6 @@ button.seg::after { content: ""; position: absolute; right: 9px; top: calc(50% -
 .hours-control > svg { width: 14px; height: 14px; color: var(--faint); margin-right: 1px; }
 .hours-control select { min-height: 34px; padding: 2px 1px; border: 0; border-radius: 5px; background: var(--surface); font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; cursor: pointer; }
 .time-divider { color: var(--faint); font-size: 14px; }
-.auto { position: relative; display: inline-flex; align-items: center; gap: 7px; margin-left: auto; font-size: 13px; color: var(--muted); white-space: nowrap; cursor: pointer; user-select: none; }
-.auto input { position: absolute; right: 0; width: 30px; height: 18px; margin: 0; opacity: 0; }
-.switch-track { position: relative; width: 30px; height: 18px; border-radius: 12px; background: var(--busy-line); transition: background .2s; pointer-events: none; }
-.switch-track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgb(0 0 0 / 16%); transition: transform .2s; }
-.auto input:checked + .switch-track { background: #34c759; }
-.auto input:checked + .switch-track::after { transform: translateX(12px); }
-.auto input:focus-visible + .switch-track { outline: 3px solid var(--pick); outline-offset: 3px; }
 .schedule { margin-top: 23px; }
 .section-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: 0 2px 11px; }
 h2 { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: -.35px; }
@@ -203,15 +196,17 @@ button.pk-del:hover { color: var(--danger); }
 .diag summary::-webkit-details-marker { display: none; }
 .diag summary > svg { width: 15px; height: 15px; }
 .diag summary::after { content: ""; width: 5px; height: 5px; margin: 0 3px; border-right: 1.4px solid var(--faint); border-bottom: 1.4px solid var(--faint); transform: rotate(-45deg); transition: transform .15s; }
-.diag[open] summary::after { transform: rotate(45deg); }
+.diag[open] > summary::after, .sub[open] > summary::after { transform: rotate(45deg); }
 .summary-detail { margin-left: auto; font-size: 12px; color: var(--faint); }
 .details-content { padding: 0 0 14px 24px; }
 .key-row { display: block; margin-bottom: 6px; font-size: 14px; color: var(--muted); }
 
-/* 설정: 로컬 CLI 연결 상태 */
-.row-line { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-bottom: 4px; font-size: 14px; }
-.row-line button { margin-left: auto; }
-.row-line strong { font-size: 14px; }
+/* 설정 안에 접어 둔 항목(로컬 CLI · API 키). 바깥 항목보다 낮고 아이콘이 없다. */
+.sub { border-top: 1px solid var(--line); }
+.sub > summary { min-height: 38px; }
+.sub > summary > strong { font-size: 14px; font-weight: 600; color: var(--fg); }
+.sub > summary > .badge { margin-left: auto; }
+.sub .details-content { padding: 0 0 10px; }
 .badge {
   font-size: 12px; padding: 1px 7px; border-radius: 8px;
   border: 1px solid var(--line); color: var(--muted); white-space: nowrap;
@@ -232,8 +227,6 @@ button.pk-del:hover { color: var(--danger); }
   .filter-bar { gap: 9px; margin-top: 9px; padding-top: 9px; }
   .hours-control { gap: 2px; }
   .hours-control > svg { display: none; }
-  .auto { gap: 5px; }
-  .auto > span:first-child { font-size: 13px; }
   .date-label { font-size: 18px; }
   .calendar-icon { width: 34px; height: 34px; }
   .date-display { gap: 8px; }
@@ -260,7 +253,7 @@ button.pk-del:hover { color: var(--danger); }
   .count { background: var(--surface-soft); }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
-@media (forced-colors: active) { .slot-fill { forced-color-adjust: none; } td.slot:focus-visible { outline-color: Highlight; } .switch-track { border: 1px solid ButtonText; } }
+@media (forced-colors: active) { .slot-fill { forced-color-adjust: none; } td.slot:focus-visible { outline-color: Highlight; } }
 
 
 /* ------------------------------------------------------------ 탭 */

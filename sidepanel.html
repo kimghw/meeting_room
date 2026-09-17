@@ -58,9 +58,6 @@
             <option value="30" selected>한 달</option>
           </select>
         </div>
-        <label class="auto" title="60초마다 자동으로 다시 조회합니다">
-          <span>자동 갱신</span><input type="checkbox" id="auto" role="switch" /><span class="switch-track" aria-hidden="true"></span>
-        </label>
       </div>
     </section>
     <section class="ask card off" aria-labelledby="askTitle">
@@ -130,18 +127,24 @@
             사이트는 로그인한 사람이 누구인지 화면에 적어주지 않습니다. 이름을 넣어두면
             예약자 이름으로도 <strong>내 예약</strong>을 찾습니다. 이 확장으로 예약하면 자동으로 채워집니다.
           </p>
-          <div class="row-line">
-            <strong>로컬 Claude CLI</strong>
-            <span id="cliState" class="badge">확인 중</span>
-            <button id="cliCheck" class="ghost small">다시 확인</button>
-          </div>
-          <p class="hint">
-            연결되면 API 키 없이 이미 로그인된 Claude Code 를 씁니다.
-            설정 방법은 <code>native/install.ps1</code> 을 보세요.
-          </p>
-          <label class="key-row" for="apiKey">Anthropic API 키 (CLI 가 없을 때만)</label>
-          <input type="password" id="apiKey" placeholder="sk-ant-... (선택)" autocomplete="off" spellcheck="false" />
-          <p class="hint">둘 다 없으면 <strong>말로 찾기</strong> 칸이 잠깁니다. 키는 이 브라우저에만 저장됩니다.</p>
+          <!-- 아래 둘은 접어 둔다. 한 번 붙여 두면 다시 볼 일이 드물고, 배지만 보이면 충분하다. -->
+          <details class="sub">
+            <summary><strong>로컬 Claude CLI</strong><span id="cliState" class="badge">확인 중</span></summary>
+            <div class="details-content">
+              <p class="hint">
+                연결되면 API 키 없이 이미 로그인된 Claude Code 를 씁니다.
+                설정 방법은 <code>native/install.ps1</code> 을 보세요.
+              </p>
+              <button id="cliCheck" class="ghost small">다시 확인</button>
+            </div>
+          </details>
+          <details class="sub">
+            <summary><strong>Anthropic API 키</strong><span id="apiKeyState" class="summary-detail">CLI 가 없을 때만</span></summary>
+            <div class="details-content">
+              <input type="password" id="apiKey" aria-label="Anthropic API 키" placeholder="sk-ant-... (선택)" autocomplete="off" spellcheck="false" />
+              <p class="hint">둘 다 없으면 <strong>말로 찾기</strong> 칸이 잠깁니다. 키는 이 브라우저에만 저장됩니다.</p>
+            </div>
+          </details>
         </div>
       </details>
       <details id="logBox" class="diag">

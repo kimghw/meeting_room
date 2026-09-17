@@ -18,7 +18,10 @@ import {
 import { detectCarForm, buildCarFields, readAlert, readFormWho } from './carform.js';
 
 export const CAR_LIST_URL = `${ORIGIN}/intra/intranet/VSDotnet/RentCar/New_List.aspx?s_code=0102010300`;
-export const CAR_SHELL_URL = `${ORIGIN}/GAPSU/GeneralAffairs/SurveyWork/BusinessVehicle/BVM_Car_List.aspx?s_code=0102010100`;
+// 새 탭으로 여는 사이트 화면. 사이트 메뉴의 '본부공용차량 이용신청' 탭은 GAPSU 껍데기 없이
+// 이 intra 목록 페이지를 곧장 새 창(target=_blank)으로 열므로 목록 주소와 같다.
+// BVM_Car_List.aspx?s_code=0102010100 은 옆 탭 '차량리스트' — 예약 버튼이 없는 화면이라 쓰지 않는다.
+export const CAR_SHELL_URL = CAR_LIST_URL;
 
 const clean = (s) => (s || '').replace(/ /g, ' ').replace(/\s+/g, ' ').trim();
 

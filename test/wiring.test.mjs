@@ -29,7 +29,10 @@ async function boot(saved) {
     return orig.call(this, type, fn, opts);
   };
 
-  const calls = { load: 0, urls: [], downloads: [], clipboard: [] };
+  const calls = { load: 0, urls: [], downloads: [], clipboard: [], intervals: [] };
+  // 자동 갱신은 스위치 없이 늘 돈다. 어떤 간격으로 타이머를 거는지만 적어 둔다.
+  const realSetInterval = globalThis.setInterval;
+  globalThis.setInterval = (fn, ms, ...rest) => { calls.intervals.push(ms); return realSetInterval(fn, ms, ...rest); };
   // 쓴 것은 기억한다 — 활동 기록이 저장소를 거쳐 다시 읽히는지 여기서 본다.
   const store = { ...saved };
   window.chrome = {
@@ -61,14 +64,33 @@ async function boot(saved) {
 
   await import(`../sidepanel.js?bust=${Math.random()}`);
   await new Promise((r) => setTimeout(r, 60));   // init 의 await 가 풀릴 시간
+  globalThis.setInterval = realSetInterval;
   return { wired, window, calls, store };
 }
 
 console.log('회의실 모드로 시작');
 {
-  const { wired } = await boot({ mode: 'room' });
+  const { wired, window, calls } = await boot({ mode: 'room' });
+  const doc = window.document;
   t('날짜 입력에 change', () => assert.ok(wired.get('date')?.has('change')));
   t('날짜 입력에 input', () => assert.ok(wired.get('date')?.has('input')));
+  t('자동 갱신은 스위치 없이 늘 돈다 (60초)', () => {
+    assert.equal(doc.getElementById('auto'), null, '자동 갱신 스위치가 남아 있다');
+    assert.ok(calls.intervals.includes(60_000), '걸린 타이머: ' + calls.intervals.join(', '));
+  });
+  t('설정의 로컬 CLI·API 키는 접혀 있다', () => {
+    const subs = [...doc.querySelectorAll('.settings details.sub')];
+    assert.equal(subs.length, 2);
+    assert.ok(subs.every((d) => !d.open));
+    assert.match(subs[0].querySelector('summary').textContent, /로컬 Claude CLI/);
+    assert.match(subs[1].querySelector('summary').textContent, /Anthropic API 키/);
+  });
+  t('접힌 요약 줄에 CLI 배지와 키 유무가 보인다', () => {
+    assert.ok(doc.querySelector('details.sub > summary #cliState'));
+    assert.equal(doc.getElementById('apiKeyState').textContent, 'CLI 가 없을 때만');
+  });
+  t('CLI 다시 확인 버튼', () => assert.ok(wired.get('cliCheck')?.has('click')));
+  t('API 키 입력', () => assert.ok(wired.get('apiKey')?.has('change') || wired.get('apiKey')?.has('input')));
   t('회의실 탭 클릭', () => assert.ok(wired.get('tabRoom')?.has('click')));
   t('차량 탭 클릭', () => assert.ok(wired.get('tabCar')?.has('click')));
   t('내 예약 탭 클릭', () => assert.ok(wired.get('tabMine')?.has('click')));
@@ -92,7 +114,7 @@ console.log('회의실 모드로 시작');
 
 console.log('차량 모드로 시작 (조기 return 회귀 방지)');
 {
-  const { wired, window } = await boot({ mode: 'car' });
+  const { wired, window, calls } = await boot({ mode: 'car' });
   const doc = window.document;
   t('날짜 입력에 change', () => assert.ok(wired.get('date')?.has('change')));
   t('회의실 탭 클릭', () => assert.ok(wired.get('tabRoom')?.has('click')));
@@ -100,7 +122,7 @@ console.log('차량 모드로 시작 (조기 return 회귀 방지)');
   t('새로고침 클릭', () => assert.ok(wired.get('refresh')?.has('click')));
   t('시간 선택', () => assert.ok(wired.get('hourStart')?.has('change')));
   t('현황 옆 페이지 열기 아이콘', () => assert.ok(wired.get('openPageInline')?.has('click')));
-  t('자동 갱신 토글', () => assert.ok(wired.get('auto')?.has('change')));
+  t('자동 갱신 타이머가 걸린다', () => assert.ok(calls.intervals.includes(60_000)));
 
   // 차량은 오래 "조회 전용"이었다. 신청 칸이 뜨는지 여기서 붙잡아 둔다.
   t('차량 탭에서 신청 칸(행선지·동승자)이 보인다', () => {
@@ -146,6 +168,8 @@ console.log('API 키가 있으면 말로 찾기 칸이 열린다');
   t('입력칸이 열려 있다', () => assert.ok(!doc.getElementById('askInput').disabled));
   t('제목 몫을 하던 플레이스홀더로 돌아온다', () =>
     assert.equal(doc.getElementById('askInput').placeholder, '말로 찾는 회의실/차량'));
+  t('접힌 요약 줄에 키가 저장됐다고 적힌다', () =>
+    assert.equal(doc.getElementById('apiKeyState').textContent, '저장됨'));
 }
 
 console.log('내 예약 모드로 시작 (조기 return 회귀 방지)');

@@ -25,9 +25,9 @@ const el = {
   title: $('fTitle'), submit: $('submit'), extend: $('extend'), cancelBtn: $('cancelBooking'),
   lblTitle: $('lblTitle'), carFields: $('carFields'), place: $('fPlace'),
   passenger: $('fPassenger'), carWho: $('carWho'), modify: $('modify'), editNote: $('editNote'),
-  auto: $('auto'), stamp: $('stamp'), pickList: $('pickList'),
+  stamp: $('stamp'), pickList: $('pickList'),
   ask: $('askInput'), askGo: $('askGo'), askNote: $('askNote'), askList: $('askList'),
-  apiKey: $('apiKey'), cliState: $('cliState'), cliCheck: $('cliCheck'),
+  apiKey: $('apiKey'), apiKeyState: $('apiKeyState'), cliState: $('cliState'), cliCheck: $('cliCheck'),
   tabRoom: $('tabRoom'), tabCar: $('tabCar'), tabMine: $('tabMine'), appTitle: $('appTitle'),
   openPageInline: $('openPageInline'), scheduleTitle: $('scheduleTitle'), scheduleDate: $('scheduleDate'),
   capture: $('capture'), diagOut: $('diagOut'),
@@ -165,11 +165,12 @@ function paintStamp() {
   el.stamp.textContent = agoText(state.loadedAt);
 }
 
-/** 자동 갱신. 패널이 보이지 않을 때는 서버를 두드리지 않는다. */
+/**
+ * 자동 갱신. 스위치 없이 늘 돈다 — 현황은 금방 낡고, 꺼 둘 이유가 없었다.
+ * 패널이 보이지 않을 때는 서버를 두드리지 않는다.
+ */
 function applyAuto() {
   clearInterval(state.timer);
-  state.timer = null;
-  if (!el.auto.checked) return;
   state.timer = setInterval(() => {
     // 내 예약은 하루에 한 번씩 며칠을 훑는다. 60초마다 자동으로 돌릴 일이 아니다.
     if (document.hidden || el.refresh.disabled || isMineMode()) return;
@@ -1533,6 +1534,8 @@ const ASK_OFF_HINT = 'native/install.ps1 로 다리를 등록하거나, 아래 �
  */
 function paintAskReady() {
   const ready = state.cli || !!state.apiKey;
+  // 키 칸은 접혀 있다. 넣어 뒀는지는 펼치지 않아도 보이게 요약 줄에 적는다.
+  el.apiKeyState.textContent = state.apiKey ? '저장됨' : 'CLI 가 없을 때만';
   el.ask.disabled = !ready;
   el.askGo.disabled = !ready || state.asking;
   document.querySelector('.ask')?.classList.toggle('off', !ready);
@@ -1637,9 +1640,8 @@ function applyMode(mode) {
   // 그래서 플레이스홀더가 제목 몫을 하고, 탭별 예문은 툴팁으로 내린다.
   paintAskReady();
 
-  // 내 예약은 날짜를 여러 날 훑는다. 시간대·자동 갱신은 뜻이 없고 기간이 필요하다.
+  // 내 예약은 날짜를 여러 날 훑는다. 시간대는 뜻이 없고 기간이 필요하다.
   document.querySelector('.hours-control')?.toggleAttribute('hidden', mineTab);
-  document.querySelector('.auto')?.toggleAttribute('hidden', mineTab);
   el.spanControl?.toggleAttribute('hidden', !mineTab);
   el.grid.classList.toggle('hidden', mineTab);
   el.mineWrap.classList.toggle('hidden', !mineTab);
@@ -2104,13 +2106,12 @@ async function init() {
   initHourSelects();
 
   const saved = await chrome.storage.local.get(
-    ['hourStart', 'hourEnd', 'region', 'auto', 'apiKey', 'mode', 'justBooked', 'myName', 'spanDays',
+    ['hourStart', 'hourEnd', 'region', 'apiKey', 'mode', 'justBooked', 'myName', 'spanDays',
       'foldOpen']);
   if (saved.hourStart != null) el.hourStart.value = saved.hourStart;
   if (saved.hourEnd != null) el.hourEnd.value = saved.hourEnd;
   if (saved.spanDays != null) el.spanDays.value = saved.spanDays;
   if (saved.region) state.region = saved.region;
-  el.auto.checked = !!saved.auto;
   state.apiKey = saved.apiKey || '';
   state.justBooked = pruneBooked(saved.justBooked);
   state.myName = saved.myName || '';
@@ -2202,10 +2203,6 @@ async function init() {
   el.logCopy.addEventListener('click', copyLog);
   el.logSave.addEventListener('click', saveLog);
   el.logClear.addEventListener('click', clearLog);
-  el.auto.addEventListener('change', () => {
-    chrome.storage.local.set({ auto: el.auto.checked });
-    applyAuto();
-  });
   el.region.addEventListener('click', () => {
     const next = nextRegion();
     if (!next) return;
